@@ -14,3 +14,4 @@ clap = "~2.33.0"
 openssl = "~0.10.24"
 rand = "0.3"
 sodiumoxide = "0.2"
+tokio = { version = "0.2", features = ["io-util", "macros", "rt-core", "stream", "tcp"] }
