@@ -231,4 +231,19 @@ mod test {
         );
         Ok(())
     }
+
+    #[tokio::test]
+    async fn test_parse_unsupported_address_type() -> Result<()> {
+        let mut buf = ReadyBuf::make(
+            &[&[0x02], &[20], "www.ditsing.com".as_bytes(), &[0, 80]]
+        );
+        let result = Socks5Addr::read_and_parse_address(&mut buf).await;
+        if let Err(Error::UnsupportedAddressType(t)) = result {
+            assert_eq!(t, 0x02);
+        } else {
+            panic!("Expecting error UnsupportedAddressType, got {:?}", result);
+        }
+
+        Ok(())
+    }
 }
