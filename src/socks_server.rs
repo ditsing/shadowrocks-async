@@ -306,14 +306,14 @@ mod test {
     const SOCKS_SERVER_ADDR: &str = "127.0.0.1:0";
 
     fn start_and_connect_to_server() -> Result<TcpStream> {
-       start_and_connect_to_server_remote(
-           DEFAULT_REMOTE_ADDR.parse().expect("Parsing should not fail")
-       )
+        start_and_connect_to_server_remote(
+            DEFAULT_REMOTE_ADDR.parse().expect("Parsing should not fail")
+        )
     }
 
     fn start_and_connect_to_server_remote(remote_addr: SocketAddr) -> Result<TcpStream> {
-        let local_socket_addr: SocketAddr = SOCKS_SERVER_ADDR.parse()
-            .expect("Parsing should not fail.");
+        let local_socket_addr: SocketAddr =
+            SOCKS_SERVER_ADDR.parse().expect("Parsing should not fail.");
         let tcp_listener = TcpListener::bind(local_socket_addr)?;
         let server_addr = tcp_listener.local_addr()?;
         std::thread::spawn(move || {

@@ -1,11 +1,11 @@
 use std::io::Write;
 use std::net::{SocketAddr, TcpListener};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use log::info;
 
 use crate::Result;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
 
 pub fn run_local_tcp_server() -> Result<(SocketAddr, Arc<AtomicBool>)> {
     let tcp_listener = TcpListener::bind("127.0.0.1:0")?;
@@ -19,7 +19,7 @@ pub fn run_local_tcp_server() -> Result<(SocketAddr, Arc<AtomicBool>)> {
                 Ok(mut stream) => {
                     info!("Accepted connection {} from {}", count, stream.peer_addr()?);
                     stream.write_all(&count.to_be_bytes())?;
-                },
+                }
                 Err(e) => return Err(e),
             }
             count += 1;

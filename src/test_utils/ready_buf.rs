@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
 use std::task::Context;
 
-use tokio::macros::support::{Pin, Poll};
 use tokio::io::AsyncRead;
+use tokio::macros::support::{Pin, Poll};
 
 pub struct ReadyBuf {
     buf_list: VecDeque<VecDeque<u8>>,
