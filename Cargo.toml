@@ -9,9 +9,8 @@ edition = "2018"
 [dependencies]
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
 stderrlog = "0.4"
-dns-lookup = "1.0"
 clap = "~2.33.0"
 openssl = "~0.10.24"
 rand = "0.3"
 sodiumoxide = "0.2"
-tokio = { version = "0.2", features = ["io-util", "macros", "rt-core", "stream", "tcp"] }
+tokio = { version = "0.2", features = ["dns", "io-util", "macros", "rt-core", "stream", "tcp"] }

@@ -2,6 +2,7 @@ extern crate log;
 extern crate tokio;
 
 mod error;
+mod shadow_server;
 mod socks5_addr;
 mod socks_server;
 mod util;
