@@ -228,6 +228,9 @@ impl SocksServer {
                 };
 
                 // Encryption not implemented.
+                remote_stream.write_all(&target_addr.bytes()).await?;
+                let local_to_remote_port = remote_stream.local_addr()?.port();
+
                 stream.write_all(&[
                     Self::SOCKET_VERSION, ReplyStatus::Succeeded as u8,
                     Self::RSV,
@@ -239,6 +242,7 @@ impl SocksServer {
                     Socks5AddrType::V4 as u8, 0x00u8, 0x00u8, 0x00u8, 0x00u8, 0x00u8, 0x00u8,
                 ]).await?;
 
+                info!("Creating connection relay ...");
                 tokio::spawn(async move {
                     let (mut local_reader, mut local_writer) = stream.split();
                     let (mut remote_reader, mut remote_writer) = remote_stream.split();
@@ -253,6 +257,7 @@ impl SocksServer {
                     }
                     info!("Proxying to {} done", remote_addr);
                 });
+                info!("Relay created on port {}", local_to_remote_port);
             }
             _ => {
                 let unsupported_reply: [u8; 10] = [
@@ -524,4 +529,34 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    fn test_socks5_command_connect_proxy() -> Result<()> {
+        let (local_tcp_server_addr, _tcp_server_running) = run_local_tcp_server()?;
+        let socks5_addr = match local_tcp_server_addr {
+            SocketAddr::V4(socket_addr_v4) => Socks5Addr::V4(socket_addr_v4),
+            SocketAddr::V6(socket_addr_v6) => Socks5Addr::V6(socket_addr_v6),
+        };
+
+        let mut stream = start_and_connect_to_server_remote(local_tcp_server_addr)?;
+        // Handshake.
+        stream.write_all(&[0x05, 0x01, 0x00])?;
+        let mut buf = [0u8; 2];
+        stream.read_exact(&mut buf)?;
+        assert_eq!(buf, [0x05, 0x00]); // Socks version 5, no auth required.
+
+        // Command = 0x01 Connect, Address = local_tcp_server_addr
+        stream.write_all(&[0x05, 0x01, 0x00])?;
+        stream.write_all(&socks5_addr.bytes())?;
+        let mut buf = [0u8; 10];
+        stream.read_exact(&mut buf)?;
+        assert_eq!(buf, [0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+
+        let mut buf = [0u8; 4];
+        stream.read_exact(&mut buf)?;
+        assert_eq!(buf, [0x00, 0x00, 0x00, 0x01]);
+
+        Ok(())
+    }
+
 }
