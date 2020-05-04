@@ -1,10 +1,10 @@
+use std::convert::TryInto;
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
 
 use log::{debug, error, info};
 use tokio::io::{AsyncRead, AsyncReadExt};
 
 use crate::{Error, Result};
-use crate::util::{combine_u8_into_u16, split_u16_into_u8};
 
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub enum Socks5Addr {
@@ -29,7 +29,9 @@ impl Socks5Addr {
                 ret.push(Socks5AddrType::V4 as u8);
                 socket_addr_v4.ip().octets().iter()
                     .for_each(|byte| ret.push(*byte));
-                split_u16_into_u8(socket_addr_v4.port()).iter()
+                socket_addr_v4.port()
+                    .to_be_bytes()
+                    .iter()
                     .for_each(|byte| ret.push(*byte));
             }
             Socks5Addr::Domain(domain, port) => {
@@ -38,14 +40,18 @@ impl Socks5Addr {
                 ret.push(domain.len() as u8);
                 domain.iter()
                     .for_each(|byte| ret.push(*byte));
-                split_u16_into_u8(*port).iter()
+                port
+                    .to_be_bytes()
+                    .iter()
                     .for_each(|byte| ret.push(*byte));
             }
             Socks5Addr::V6(socket_addr_v6) => {
                 ret.push(Socks5AddrType::V6 as u8);
                 socket_addr_v6.ip().octets().iter()
                     .for_each(|byte| ret.push(*byte));
-                split_u16_into_u8(socket_addr_v6.port()).iter()
+                socket_addr_v6.port()
+                    .to_be_bytes()
+                    .iter()
                     .for_each(|byte| ret.push(*byte));
             }
         };
@@ -105,14 +111,14 @@ impl Socks5Addr {
                 Socks5Addr::V6(
                     SocketAddrV6::new(
                         Ipv6Addr::new(
-                            combine_u8_into_u16(&ipv6_buf[0..2]),
-                            combine_u8_into_u16(&ipv6_buf[2..4]),
-                            combine_u8_into_u16(&ipv6_buf[4..6]),
-                            combine_u8_into_u16(&ipv6_buf[6..8]),
-                            combine_u8_into_u16(&ipv6_buf[8..10]),
-                            combine_u8_into_u16(&ipv6_buf[10..12]),
-                            combine_u8_into_u16(&ipv6_buf[12..14]),
-                            combine_u8_into_u16(&ipv6_buf[14..16]),
+                            u16::from_be_bytes(ipv6_buf[0..2].try_into().unwrap()),
+                            u16::from_be_bytes(ipv6_buf[2..4].try_into().unwrap()),
+                            u16::from_be_bytes(ipv6_buf[4..6].try_into().unwrap()),
+                            u16::from_be_bytes(ipv6_buf[6..8].try_into().unwrap()),
+                            u16::from_be_bytes(ipv6_buf[8..10].try_into().unwrap()),
+                            u16::from_be_bytes(ipv6_buf[10..12].try_into().unwrap()),
+                            u16::from_be_bytes(ipv6_buf[12..14].try_into().unwrap()),
+                            u16::from_be_bytes(ipv6_buf[14..16].try_into().unwrap()),
                         ),
                         port,
                         0,
@@ -137,16 +143,16 @@ impl Socks5Addr {
         let mut port_buf = [0u8; 2];
         stream.read_exact(&mut port_buf).await?;
 
-        let port = combine_u8_into_u16(&port_buf);
+        let port = u16::from_be_bytes(port_buf);
         Ok(port)
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::*;
-
     use crate::test_utils::ready_buf::ReadyBuf;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_parse_ipv4() -> Result<()> {
