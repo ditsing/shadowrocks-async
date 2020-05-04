@@ -1,5 +1,5 @@
 use std::io::ErrorKind;
-use std::net::{Shutdown, SocketAddr};
+use std::net::{Shutdown, SocketAddr, ToSocketAddrs};
 
 use log::{debug, error, info, warn};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
@@ -69,6 +69,17 @@ enum ReplyStatus {
 impl SocksServer {
     const SOCKET_VERSION: u8 = 0x05u8;
     const RSV: u8 = 0x00u8;
+
+    pub async fn create<A: ToSocketAddrs>(addr: SocketAddr, remote: A) -> Result<Self> {
+        info!("Creating SOCKS5 server ...");
+        Ok(
+            Self {
+                remote_addr: remote.to_socket_addrs()?.next()
+                    .expect("Expecting a valid server address and port as remote"),
+                tcp_listener: Some(TcpListener::bind(addr).await?),
+            }
+        )
+    }
 
     fn check_socks_version(version: u8) -> Result<()> {
         if version != Self::SOCKET_VERSION {
@@ -275,7 +286,7 @@ impl SocksServer {
         Ok(())
     }
 
-    async fn run(mut self) {
+    pub async fn run(mut self) {
         let mut tcp_listener =
             self.tcp_listener.take().expect("Expecting an initialized tcp server.");
         info!("Running socks server loop ...");

@@ -1,3 +1,5 @@
+use std::net::SocketAddr;
+
 use log::{debug, error, info, warn};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::stream::StreamExt;
@@ -10,6 +12,13 @@ pub struct ShadowServer {
 }
 
 impl ShadowServer {
+    pub async fn create(addr: SocketAddr) -> Result<Self> {
+        info!("Creating shadow server ...");
+        Ok(Self {
+            tcp_listener: Some(TcpListener::bind(addr).await?),
+        })
+    }
+
     async fn serve_shadow_stream(&mut self, stream: TcpStream) -> Result<()> {
         info!("Serving shadow stream ...");
         let mut encrypted_stream = stream;
@@ -62,7 +71,7 @@ impl ShadowServer {
         Ok(())
     }
 
-    async fn run(mut self) {
+    pub async fn run(mut self) {
         let mut tcp_listener =
             self.tcp_listener.take().expect("Expecting an initialized tcp server");
         info!("Running shadow server loop ...");
@@ -86,7 +95,7 @@ impl ShadowServer {
 #[cfg(test)]
 mod test {
     use std::io::{Read, Write};
-    use std::net::{SocketAddr, TcpListener, TcpStream};
+    use std::net::{TcpListener, TcpStream};
 
     use crate::test_utils::local_tcp_server::run_local_tcp_server;
 
