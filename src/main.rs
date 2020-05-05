@@ -1,7 +1,11 @@
 extern crate log;
+extern crate openssl;
+extern crate rand;
+extern crate sodiumoxide;
 extern crate stderrlog;
 extern crate tokio;
 
+mod crypto;
 mod error;
 mod shadow_server;
 mod socks5_addr;
