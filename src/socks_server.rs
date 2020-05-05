@@ -239,6 +239,7 @@ impl SocksServer {
                 };
 
                 // Encryption not implemented.
+                info!("Setting shadow address on remote ...");
                 remote_stream.write_all(&target_addr.bytes()).await?;
                 let local_to_remote_port = remote_stream.local_addr()?.port();
 

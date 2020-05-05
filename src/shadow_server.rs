@@ -21,13 +21,14 @@ impl ShadowServer {
 
     async fn serve_shadow_stream(&mut self, stream: TcpStream) -> Result<()> {
         info!("Serving shadow stream ...");
-        let mut encrypted_stream = stream;
+        let local_addr = stream.local_addr()?;
+        let peer_addr = stream.peer_addr()?;
 
-        let local_addr = encrypted_stream.local_addr()?;
+        let mut encrypted_stream = stream;
 
         let target_addr = Socks5Addr::read_and_parse_address(&mut encrypted_stream).await?;
 
-        debug!("Processing request from {} to {:?}", encrypted_stream.peer_addr()?, target_addr);
+        debug!("Processing request from {} to {:?}", peer_addr, target_addr);
 
         info!("Resolving target IP address ...");
         info!("Connecting to target address ...");
