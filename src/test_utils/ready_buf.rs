@@ -1,7 +1,8 @@
 use std::collections::VecDeque;
 use std::task::Context;
 
-use tokio::io::AsyncRead;
+use std::io::Error;
+use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::macros::support::{Pin, Poll};
 
 pub struct ReadyBuf {
@@ -10,7 +11,9 @@ pub struct ReadyBuf {
 
 impl AsyncRead for ReadyBuf {
     fn poll_read(
-        self: Pin<&mut Self>, _cx: &mut Context<'_>, buf: &mut [u8],
+        self: Pin<&mut Self>,
+        _cx: &mut Context<'_>,
+        buf: &mut [u8],
     ) -> Poll<std::result::Result<usize, std::io::Error>> {
         let real_self = std::pin::Pin::into_inner(self);
         match real_self.buf_list.pop_front() {
@@ -30,6 +33,26 @@ impl AsyncRead for ReadyBuf {
     }
 }
 
+impl AsyncWrite for ReadyBuf {
+    fn poll_write(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &[u8],
+    ) -> Poll<Result<usize, Error>> {
+        let real_self = std::pin::Pin::into_inner(self);
+        real_self.buf_list.push_back(VecDeque::from(buf.to_vec()));
+        Poll::Ready(Ok(buf.len()))
+    }
+
+    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
+        Poll::Ready(Ok(()))
+    }
+
+    fn poll_shutdown(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
+        Poll::Ready(Ok(()))
+    }
+}
+
 impl ReadyBuf {
     pub fn make(byte_arrays: &[&[u8]]) -> Self {
         let mut buf_list: VecDeque<VecDeque<u8>> = VecDeque::new();
@@ -38,6 +61,14 @@ impl ReadyBuf {
             buf_list.push_back(VecDeque::from(byte_array.to_vec()));
         }
         ReadyBuf { buf_list }
+    }
+
+    pub fn combined(self) -> Vec<u8> {
+        let mut buf = vec![];
+        for deque in self.buf_list {
+            buf.append(&mut Vec::from(deque));
+        }
+        buf
     }
 }
 

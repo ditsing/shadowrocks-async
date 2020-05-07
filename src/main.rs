@@ -6,6 +6,7 @@ extern crate stderrlog;
 extern crate tokio;
 
 mod crypto;
+mod encrypted_stream;
 mod error;
 mod shadow_server;
 mod socks5_addr;
