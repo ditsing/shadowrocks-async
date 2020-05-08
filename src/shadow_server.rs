@@ -4,19 +4,23 @@ use log::{debug, error, info};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::stream::StreamExt;
 
-use crate::{Error, Result};
+use crate::{Error, Result, GlobalConfig};
 use crate::encrypted_stream::EncryptedStream;
 use crate::socks5_addr::Socks5Addr;
 
 pub struct ShadowServer {
     tcp_listener: Option<TcpListener>,
+
+    global_config: GlobalConfig,
 }
 
 impl ShadowServer {
-    pub async fn create(addr: SocketAddr) -> Result<Self> {
+    pub async fn create(addr: SocketAddr, global_config: GlobalConfig) -> Result<Self> {
         info!("Creating shadow server ...");
+        info!("Starting shadow server at address {} ...", addr);
         Ok(Self {
             tcp_listener: Some(TcpListener::bind(addr).await?),
+            global_config,
         })
     }
 
@@ -25,7 +29,11 @@ impl ShadowServer {
         let local_addr = stream.local_addr()?;
         let peer_addr = stream.peer_addr()?;
 
-        let mut encrypted_stream = EncryptedStream::establish(stream).await?;
+        let mut encrypted_stream = EncryptedStream::establish(
+            stream,
+            self.global_config.master_key.as_slice(),
+            self.global_config.cipher_type,
+        ).await?;
 
         let target_addr = Socks5Addr::read_and_parse_address(&mut encrypted_stream).await?;
 

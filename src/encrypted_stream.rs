@@ -111,11 +111,11 @@ impl EncryptedStream {
         }
     }
 
-    pub async fn establish(mut stream: TcpStream) -> Result<Self> {
-        // Using a hard coded key.
-        let master_key = b"test-master-key.";
-        let cipher_type = CipherType::Chacha20IetfPoly1305;
-
+    pub async fn establish(
+        mut stream: TcpStream,
+        master_key: &[u8],
+        cipher_type: CipherType,
+    ) -> Result<Self> {
         // Reading blocks the process but write does not. So we first write then read.
         info!("Writing data to remote crypter ...");
         let encrypter = build_and_write_crypter(&mut stream, master_key, cipher_type).await?;

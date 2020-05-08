@@ -5,7 +5,7 @@ use log::{debug, error, info};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::stream::StreamExt;
 
-use crate::{Error, Result};
+use crate::{Error, Result, GlobalConfig};
 use crate::async_io::{AsyncReadTrait, AsyncWriteTrait};
 use crate::encrypted_stream::EncryptedStream;
 use crate::socks5_addr::{Socks5Addr, Socks5AddrType};
@@ -13,6 +13,8 @@ use crate::socks5_addr::{Socks5Addr, Socks5AddrType};
 pub struct SocksServer {
     remote_addr: SocketAddr,
     tcp_listener: Option<TcpListener>,
+
+    global_config: GlobalConfig,
 }
 
 #[repr(u8)]
@@ -71,13 +73,17 @@ impl SocksServer {
     const SOCKET_VERSION: u8 = 0x05u8;
     const RSV: u8 = 0x00u8;
 
-    pub async fn create<A: ToSocketAddrs>(addr: SocketAddr, remote: A) -> Result<Self> {
+    pub async fn create<A: ToSocketAddrs>(addr: SocketAddr, remote: A, global_config: GlobalConfig)
+        -> Result<Self> {
         info!("Creating SOCKS5 server ...");
+        info!("Starting socks server at address {} ...", addr);
         Ok(
             Self {
                 remote_addr: remote.to_socket_addrs()?.next()
                     .expect("Expecting a valid server address and port as remote"),
                 tcp_listener: Some(TcpListener::bind(addr).await?),
+
+                global_config,
             }
         )
     }
@@ -240,7 +246,11 @@ impl SocksServer {
                 };
 
                 let local_to_remote_port = remote_stream.local_addr()?.port();
-                let mut remote_encrypted_stream = EncryptedStream::establish(remote_stream).await?;
+                let mut remote_encrypted_stream = EncryptedStream::establish(
+                    remote_stream,
+                    self.global_config.master_key.as_slice(),
+                    self.global_config.cipher_type,
+                ).await?;
 
                 // Encryption not implemented.
                 info!("Setting shadow address on remote ...");
