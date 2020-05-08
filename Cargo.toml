@@ -7,6 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+async-trait = "0.1"
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
 stderrlog = "0.4"
 clap = "~2.33.0"

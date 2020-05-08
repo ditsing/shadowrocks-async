@@ -2,11 +2,11 @@ use std::io::ErrorKind;
 use std::net::{Shutdown, SocketAddr, ToSocketAddrs};
 
 use log::{debug, error, info, warn};
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::stream::StreamExt;
 
 use crate::{Error, Result};
+use crate::async_io_traits::{AsyncReadTrait, AsyncWriteTrait};
 use crate::socks5_addr::{Socks5Addr, Socks5AddrType};
 
 pub struct SocksServer {
@@ -100,7 +100,7 @@ impl SocksServer {
     }
 
     async fn read_and_parse_first_request(
-        stream: &mut (impl AsyncRead + std::marker::Unpin)
+        stream: &mut (impl AsyncReadTrait + std::marker::Unpin)
     ) -> Result<Vec<Method>> {
         info!("SOCKS5 handshaking ...");
         // The first two bytes contains version and number of methods.
@@ -127,7 +127,7 @@ impl SocksServer {
     }
 
     async fn read_and_parse_command_request(
-        stream: &mut (impl AsyncRead + std::marker::Unpin)
+        stream: &mut (impl AsyncReadTrait + std::marker::Unpin)
     ) -> Result<Option<Command>> {
         info!("Reading command request and rsv ...");
         let mut buf = [0u8; 3];

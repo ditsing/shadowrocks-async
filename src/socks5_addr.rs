@@ -2,9 +2,9 @@ use std::convert::TryInto;
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
 
 use log::{debug, error, info};
-use tokio::io::{AsyncRead, AsyncReadExt};
 
 use crate::{Error, Result};
+use crate::async_io_traits::AsyncReadTrait;
 
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub enum Socks5Addr {
@@ -59,7 +59,7 @@ impl Socks5Addr {
     }
 
     pub async fn read_and_parse_address(
-        stream: &mut (impl AsyncRead + std::marker::Unpin)
+        stream: &mut (impl AsyncReadTrait + std::marker::Unpin)
     ) -> Result<Socks5Addr> {
         info!("Reading address ...");
         let mut buf = [0u8; 1];
@@ -137,7 +137,7 @@ impl Socks5Addr {
     }
 
     async fn read_port(
-        stream: &mut (impl AsyncRead + std::marker::Unpin)
+        stream: &mut (impl AsyncReadTrait + std::marker::Unpin)
     ) -> Result<u16> {
         info!("Reading port number ...");
         let mut port_buf = [0u8; 2];

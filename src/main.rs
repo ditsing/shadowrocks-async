@@ -1,3 +1,4 @@
+extern crate async_trait;
 extern crate log;
 extern crate openssl;
 extern crate rand;
@@ -5,6 +6,7 @@ extern crate sodiumoxide;
 extern crate stderrlog;
 extern crate tokio;
 
+mod async_io_traits;
 mod crypto;
 mod encrypted_stream;
 mod error;

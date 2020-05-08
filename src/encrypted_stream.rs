@@ -1,9 +1,11 @@
 use std::convert::TryInto;
 
+use async_trait::async_trait;
+use log::info;
 use rand::Rng;
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use tokio::net::TcpStream;
 
+use crate::async_io_traits::{AsyncReadTrait, AsyncWriteTrait};
 use crate::crypto::{create_crypter, CipherType, Crypter, NonceType};
 use crate::Error;
 use crate::Result;
@@ -11,7 +13,7 @@ use crate::Result;
 const LENGTH_SIZE: usize = 2;
 
 pub async fn read_and_derive_crypter(
-    stream: &mut (impl AsyncRead + std::marker::Unpin),
+    stream: &mut (impl AsyncReadTrait + std::marker::Unpin),
     master_key: &[u8],
     cipher_type: CipherType,
 ) -> Result<Box<dyn Crypter>> {
@@ -25,7 +27,7 @@ pub async fn read_and_derive_crypter(
 }
 
 pub async fn read_encrypt(
-    stream: &mut (impl AsyncRead + std::marker::Unpin),
+    stream: &mut (impl AsyncReadTrait + std::marker::Unpin),
     crypter: &mut Box<dyn Crypter>,
 ) -> Result<Vec<u8>> {
     let mut buf = vec![0u8; crypter.expected_ciphertext_length(LENGTH_SIZE)];
@@ -41,7 +43,7 @@ pub async fn read_encrypt(
 }
 
 pub async fn build_and_write_crypter(
-    stream: &mut (impl AsyncWrite + std::marker::Unpin),
+    stream: &mut (impl AsyncWriteTrait + std::marker::Unpin),
     master_key: &[u8],
     cipher_type: CipherType,
 ) -> Result<Box<dyn Crypter>> {
@@ -56,7 +58,7 @@ pub async fn build_and_write_crypter(
 }
 
 pub async fn write_encrypt(
-    stream: &mut (impl AsyncWrite + std::marker::Unpin),
+    stream: &mut (impl AsyncWriteTrait + std::marker::Unpin),
     crypter: &mut Box<dyn Crypter>,
     data: &[u8],
 ) -> Result<()> {
@@ -73,6 +75,9 @@ pub struct EncryptedStream {
     stream: TcpStream,
     decrypter: Box<dyn Crypter>,
     encrypter: Box<dyn Crypter>,
+
+    buf: Vec<u8>,
+    ptr: usize,
 }
 
 impl EncryptedStream {
@@ -85,15 +90,51 @@ impl EncryptedStream {
             stream,
             decrypter,
             encrypter,
+
+            buf: vec![],
+            ptr: 0,
         }
     }
 
-    pub async fn read_package(&mut self) -> Result<Vec<u8>> {
-        read_encrypt(&mut self.stream, &mut self.decrypter).await
-    }
+    pub async fn establish(mut stream: TcpStream) -> Result<Self> {
+        // Using a hard coded key.
+        let master_key = b"test-master-key.";
+        let cipher_type = CipherType::Chacha20IetfPoly1305;
 
-    pub async fn write_package(&mut self, data: &[u8]) -> Result<()> {
+        // Reading blocks the process but write does not. So we first write then read.
+        info!("Writing data to remote crypter ...");
+        let encrypter = build_and_write_crypter(&mut stream, master_key, cipher_type).await?;
+        info!("Reading data to create crypter ...");
+        let decrypter = read_and_derive_crypter(&mut stream, master_key, cipher_type).await?;
+        let encrypted_stream = EncryptedStream::create(
+            stream, decrypter, encrypter,
+        );
+        Ok(encrypted_stream)
+    }
+}
+
+#[async_trait]
+impl AsyncReadTrait for EncryptedStream {
+    async fn read_exact(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let mut buf_ptr = 0;
+        while buf_ptr < buf.len() {
+            self.buf = read_encrypt(&mut self.stream, &mut self.decrypter).await
+                .map_err(convert_to_io_error)?;
+
+            let copy_len = std::cmp::min(self.buf.len() - self.ptr, buf.len() - buf_ptr);
+            buf[buf_ptr..copy_len].clone_from_slice(&self.buf[self.ptr..(self.ptr + copy_len)]);
+            self.ptr += copy_len;
+            buf_ptr += copy_len;
+        }
+        Ok(buf_ptr)
+    }
+}
+
+#[async_trait]
+impl AsyncWriteTrait for EncryptedStream {
+    async fn write_all(&mut self, data: &[u8]) -> std::io::Result<()> {
         write_encrypt(&mut self.stream, &mut self.encrypter, data).await
+            .map_err(convert_to_io_error)
     }
 }
 
