@@ -4,7 +4,7 @@ use std::net::{Ipv4Addr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
 use log::{debug, error, info};
 
 use crate::{Error, Result};
-use crate::async_io_traits::AsyncReadTrait;
+use crate::async_io::AsyncReadTrait;
 
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub enum Socks5Addr {

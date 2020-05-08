@@ -1,12 +1,13 @@
 use std::io::ErrorKind;
 use std::net::{Shutdown, SocketAddr, ToSocketAddrs};
 
-use log::{debug, error, info, warn};
+use log::{debug, error, info};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::stream::StreamExt;
 
 use crate::{Error, Result};
-use crate::async_io_traits::{AsyncReadTrait, AsyncWriteTrait};
+use crate::async_io::{AsyncReadTrait, AsyncWriteTrait};
+use crate::encrypted_stream::EncryptedStream;
 use crate::socks5_addr::{Socks5Addr, Socks5AddrType};
 
 pub struct SocksServer {
@@ -224,7 +225,7 @@ impl SocksServer {
                     error!("Error connecting to remote: {}", e);
                     socks5_error
                 });
-                let mut remote_stream = match remote_stream {
+                let remote_stream = match remote_stream {
                     Ok(remote_stream) => remote_stream,
                     Err(reply_status) => {
                         let error_reply: [u8; 10] = [
@@ -238,10 +239,12 @@ impl SocksServer {
                     }
                 };
 
+                let local_to_remote_port = remote_stream.local_addr()?.port();
+                let mut remote_encrypted_stream = EncryptedStream::establish(remote_stream).await?;
+
                 // Encryption not implemented.
                 info!("Setting shadow address on remote ...");
-                remote_stream.write_all(&target_addr.bytes()).await?;
-                let local_to_remote_port = remote_stream.local_addr()?.port();
+                remote_encrypted_stream.write_all(&target_addr.bytes()).await?;
 
                 stream.write_all(&[
                     Self::SOCKET_VERSION, ReplyStatus::Succeeded as u8,
@@ -255,20 +258,7 @@ impl SocksServer {
                 ]).await?;
 
                 info!("Creating connection relay ...");
-                tokio::spawn(async move {
-                    let (mut local_reader, mut local_writer) = stream.split();
-                    let (mut remote_reader, mut remote_writer) = remote_stream.split();
-                    let upstream = tokio::io::copy(&mut local_reader, &mut remote_writer);
-                    let downstream = tokio::io::copy(&mut remote_reader, &mut local_writer);
-                    let (upstream_result, downstream_result) = tokio::join!(upstream, downstream);
-                    if let Err(e) = upstream_result {
-                        warn!("Error proxying data, upstream failed: {}", e);
-                    }
-                    if let Err(e) = downstream_result {
-                        warn!("Error proxying data, downstream failed: {}", e);
-                    }
-                    info!("Proxying to {} done", remote_addr);
-                });
+                crate::async_io::proxy(stream, remote_encrypted_stream, target_addr);
                 info!("Relay created on port {}", local_to_remote_port);
             }
             _ => {

@@ -6,7 +6,7 @@ extern crate sodiumoxide;
 extern crate stderrlog;
 extern crate tokio;
 
-mod async_io_traits;
+mod async_io;
 mod crypto;
 mod encrypted_stream;
 mod error;

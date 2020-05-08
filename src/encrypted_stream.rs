@@ -3,9 +3,9 @@ use std::convert::TryInto;
 use async_trait::async_trait;
 use log::info;
 use rand::Rng;
-use tokio::net::TcpStream;
+use tokio::net::{TcpStream, tcp::{OwnedReadHalf, OwnedWriteHalf}};
 
-use crate::async_io_traits::{AsyncReadTrait, AsyncWriteTrait};
+use crate::async_io::{AsyncReadTrait, AsyncWriteTrait, SplitIntoAsync};
 use crate::crypto::{create_crypter, CipherType, Crypter, NonceType};
 use crate::Error;
 use crate::Result;
@@ -71,13 +71,22 @@ pub async fn write_encrypt(
     Ok(())
 }
 
-pub struct EncryptedStream {
-    stream: TcpStream,
+pub struct EncryptedReadStream {
+    stream: OwnedReadHalf,
     decrypter: Box<dyn Crypter>,
-    encrypter: Box<dyn Crypter>,
 
     buf: Vec<u8>,
     ptr: usize,
+}
+
+pub struct EncryptedWriteStream {
+    stream: OwnedWriteHalf,
+    encrypter: Box<dyn Crypter>,
+}
+
+pub struct EncryptedStream {
+    read_half: EncryptedReadStream,
+    write_half: EncryptedWriteStream,
 }
 
 impl EncryptedStream {
@@ -86,13 +95,19 @@ impl EncryptedStream {
         decrypter: Box<dyn Crypter>,
         encrypter: Box<dyn Crypter>,
     ) -> Self {
+        let (reader, writer) = stream.into_split();
         Self {
-            stream,
-            decrypter,
-            encrypter,
+            read_half: EncryptedReadStream {
+                stream: reader,
+                decrypter,
 
-            buf: vec![],
-            ptr: 0,
+                buf: vec![],
+                ptr: 0,
+            },
+            write_half: EncryptedWriteStream {
+                stream: writer,
+                encrypter,
+            },
         }
     }
 
@@ -114,27 +129,72 @@ impl EncryptedStream {
 }
 
 #[async_trait]
-impl AsyncReadTrait for EncryptedStream {
+impl AsyncReadTrait for EncryptedReadStream {
+    async fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        if self.buf.len() == self.ptr {
+            self.buf = read_encrypt(&mut self.stream, &mut self.decrypter).await
+                .map_err(convert_to_io_error)?;
+            self.ptr = 0;
+        }
+
+        let copy_len = std::cmp::min(self.buf.len() - self.ptr, buf.len());
+        buf[..copy_len].clone_from_slice(&self.buf[self.ptr..(self.ptr + copy_len)]);
+        self.ptr += copy_len;
+        Ok(copy_len)
+    }
+
     async fn read_exact(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut buf_ptr = 0;
         while buf_ptr < buf.len() {
-            self.buf = read_encrypt(&mut self.stream, &mut self.decrypter).await
-                .map_err(convert_to_io_error)?;
-
-            let copy_len = std::cmp::min(self.buf.len() - self.ptr, buf.len() - buf_ptr);
-            buf[buf_ptr..copy_len].clone_from_slice(&self.buf[self.ptr..(self.ptr + copy_len)]);
-            self.ptr += copy_len;
-            buf_ptr += copy_len;
+            let offset = AsyncReadTrait::read(self, &mut buf[buf_ptr..]).await?;
+            buf_ptr += offset;
         }
         Ok(buf_ptr)
     }
 }
 
 #[async_trait]
-impl AsyncWriteTrait for EncryptedStream {
+impl AsyncReadTrait for EncryptedStream {
+    async fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        self.read_half.read(buf).await
+    }
+
+    async fn read_exact(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        self.read_half.read_exact(buf).await
+    }
+}
+
+#[async_trait]
+impl AsyncWriteTrait for EncryptedWriteStream {
+    async fn write(&mut self, data: &[u8]) -> std::io::Result<usize> {
+        write_encrypt(&mut self.stream, &mut self.encrypter, data).await
+            .map(|_| data.len())
+            .map_err(convert_to_io_error)
+    }
+
     async fn write_all(&mut self, data: &[u8]) -> std::io::Result<()> {
         write_encrypt(&mut self.stream, &mut self.encrypter, data).await
             .map_err(convert_to_io_error)
+    }
+}
+
+#[async_trait]
+impl AsyncWriteTrait for EncryptedStream {
+    async fn write(&mut self, data: &[u8]) -> std::io::Result<usize> {
+        self.write_half.write(data).await
+    }
+
+    async fn write_all(&mut self, data: &[u8]) -> std::io::Result<()> {
+        self.write_half.write_all(data).await
+    }
+}
+
+impl SplitIntoAsync for EncryptedStream {
+    type R = EncryptedReadStream;
+    type W = EncryptedWriteStream;
+
+    fn into_split(self) -> (EncryptedReadStream, EncryptedWriteStream) {
+        (self.read_half, self.write_half)
     }
 }
 
