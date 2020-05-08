@@ -11,6 +11,7 @@ async-trait = "0.1"
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
 stderrlog = "0.4"
 clap = "~2.33.0"
+ring = "~0.16.7"
 openssl = "~0.10.24"
 rand = "0.3"
 sodiumoxide = "0.2"

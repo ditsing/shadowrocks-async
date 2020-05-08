@@ -3,6 +3,7 @@ extern crate clap;
 extern crate log;
 extern crate openssl;
 extern crate rand;
+extern crate ring;
 extern crate sodiumoxide;
 extern crate stderrlog;
 extern crate tokio;
@@ -23,8 +24,9 @@ mod test_utils;
 
 use error::Error;
 
-use crate::crypto::lookup_cipher;
-use crate::crypto::{derive_master_key_compatible, CipherType};
+use crate::crypto::{
+    derive_master_key_compatible, derive_master_key_pbkdf2, lookup_cipher, CipherType,
+};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -110,7 +112,11 @@ async fn main() -> Result<()> {
     let fast_open = matches.is_present("fast_open");
     let compatible_mode = matches.is_present("compatible_mode");
     let global_config = GlobalConfig {
-        master_key: derive_master_key_compatible(password.as_bytes(), cipher_type.spec().key_size)?,
+        master_key: if compatible_mode {
+            derive_master_key_compatible(password.as_bytes(), cipher_type.spec().key_size)?
+        } else {
+            derive_master_key_pbkdf2(password.as_bytes(), &[], cipher_type.spec().key_size)
+        },
         cipher_type,
         timeout,
         fast_open,
@@ -121,7 +127,9 @@ async fn main() -> Result<()> {
         let server = shadow_server::ShadowServer::create(server_socket_addr, global_config).await?;
         server.run().await
     } else {
-        let server = socks_server::SocksServer::create(local_socket_addr, server_socket_addr, global_config).await?;
+        let server =
+            socks_server::SocksServer::create(local_socket_addr, server_socket_addr, global_config)
+                .await?;
         server.run().await
     }
     Ok(())
