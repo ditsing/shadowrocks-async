@@ -1,7 +1,7 @@
-use std::io::{Write, Read};
+use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener};
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 use log::info;
 
@@ -13,7 +13,7 @@ pub fn run_local_tcp_server() -> Result<(SocketAddr, Arc<AtomicBool>)> {
     let running = Arc::new(AtomicBool::new(true));
     let running_clone = running.clone();
     std::thread::spawn(move || {
-        let mut count = 0u32;
+        let mut count = 0u16;
         for stream in tcp_listener.incoming() {
             count += 1;
             match stream {
@@ -22,11 +22,16 @@ pub fn run_local_tcp_server() -> Result<(SocketAddr, Arc<AtomicBool>)> {
                     let mut buf = [0u8; 2];
                     stream.read_exact(&mut buf)?;
 
-                    if u16::from_be_bytes(buf) == 1990 {
-                        stream.write_all(&1209u16.to_be_bytes())?;
-                    }
+                    let mask = 1209u16.to_be_bytes();
+                    let prefix_bytes: &[u8] = if u16::from_be_bytes(buf) == 1990 {
+                        &mask
+                    } else {
+                        &[0x00, 0x02]
+                    };
+                    stream.write_all(&[prefix_bytes, &count.to_be_bytes()].concat())?;
 
-                    stream.write_all(&count.to_be_bytes())?;
+                    // Block until there is data, then exit.
+                    stream.read_exact(&mut buf)?;
                 }
                 Err(e) => return Err(e),
             }

@@ -116,6 +116,15 @@ impl EncryptedStream {
         master_key: &[u8],
         cipher_type: CipherType,
     ) -> Result<Self> {
+        #[cfg(test)]
+        if cipher_type == CipherType::None {
+            return Ok(EncryptedStream::create(
+                stream,
+                Box::new(crate::test_utils::plaintext_crypter::PlaintextCrypter),
+                Box::new(crate::test_utils::plaintext_crypter::PlaintextCrypter),
+            ))
+        }
+
         // Reading blocks the process but write does not. So we first write then read.
         info!("Writing data to remote crypter ...");
         let encrypter = build_and_write_crypter(&mut stream, master_key, cipher_type).await?;

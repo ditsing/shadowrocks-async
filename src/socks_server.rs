@@ -313,7 +313,9 @@ impl SocksServer {
 mod test {
     use std::io::{Read, Write};
     use std::net::{TcpListener, TcpStream};
+    use std::time::Duration;
 
+    use crate::crypto::CipherType;
     use crate::test_utils::local_tcp_server::run_local_tcp_server;
     use crate::test_utils::ready_buf::ReadyBuf;
 
@@ -341,6 +343,13 @@ mod test {
                 let server = SocksServer {
                     remote_addr,
                     tcp_listener: Some(tokio::net::TcpListener::from_std(tcp_listener).unwrap()),
+                    global_config: GlobalConfig {
+                        master_key: vec![],
+                        cipher_type: CipherType::None,
+                        timeout: Duration::from_secs(1),
+                        fast_open: false,
+                        compatible_mode: false,
+                    },
                 };
                 server.run().await
             });
@@ -564,9 +573,12 @@ mod test {
         stream.read_exact(&mut buf)?;
         assert_eq!(buf, [0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
 
-        let mut buf = [0u8; 4];
+        let mut buf = [0u8; 2];
         stream.read_exact(&mut buf)?;
-        assert_eq!(buf, [0x00, 0x00, 0x00, 0x01]);
+        assert_eq!(buf, [0x00, 0x01]);
+
+        // Allow the connection to be dropped by server.
+        stream.write_all(&[])?;
 
         Ok(())
     }

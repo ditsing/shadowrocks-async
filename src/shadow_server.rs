@@ -91,7 +91,9 @@ impl ShadowServer {
 mod test {
     use std::io::{Read, Write};
     use std::net::{TcpListener, TcpStream};
+    use std::time::Duration;
 
+    use crate::crypto::CipherType;
     use crate::test_utils::local_tcp_server::run_local_tcp_server;
 
     use super::*;
@@ -111,6 +113,14 @@ mod test {
                 // The wrapping part must be done inside a tokio runtime environment.
                 let server = ShadowServer {
                     tcp_listener: Some(tokio::net::TcpListener::from_std(tcp_listener).unwrap()),
+
+                    global_config: GlobalConfig {
+                        master_key: vec![],
+                        cipher_type: CipherType::None,
+                        timeout: Duration::from_secs(1),
+                        fast_open: false,
+                        compatible_mode: false,
+                    },
                 };
                 server.run().await
             });
@@ -127,20 +137,27 @@ mod test {
         };
 
         let mut stream = start_and_connect_to_server()?;
+        stream.write_all(&(socks5_addr.bytes().len() + 2).to_be_bytes())?; // package length
         stream.write_all(&socks5_addr.bytes())?;
 
         stream.write_all(&[0x07, 0xC6])?;
         let mut buf = [0u8; 6];
         stream.read_exact(&mut buf)?;
-        assert_eq!(buf, [0x04, 0xB9, 0x00, 0x00, 0x00, 0x01]);
+        assert_eq!(buf, [0x00, 0x04, 0x04, 0xB9, 0x00, 0x01]);
+        // Allow the connection to be dropped by server.
+        stream.write_all(&[0x00, 0x02, 0x00, 0x00])?;
 
+        // Second connection.
         let mut stream = TcpStream::connect(stream.peer_addr()?)?;
+        stream.write_all(&(socks5_addr.bytes().len() + 2).to_be_bytes())?; // package length
         stream.write_all(&socks5_addr.bytes())?;
 
         stream.write_all(&[0x07, 0xC6])?;
         let mut buf = [0u8; 6];
         stream.read_exact(&mut buf)?;
-        assert_eq!(buf, [0x04, 0xB9, 0x00, 0x00, 0x00, 0x02]);
+        assert_eq!(buf, [0x00, 0x04, 0x04, 0xB9, 0x00, 0x02]);
+        // Allow the connection to be dropped by server.
+        stream.write_all(&[0x00, 0x02, 0x00, 0x00])?;
         Ok(())
     }
 
@@ -148,6 +165,9 @@ mod test {
     fn test_shadow_stream_domain() -> Result<()> {
         let (local_tcp_server_addr, _tcp_server_running) = run_local_tcp_server()?;
         let mut stream = start_and_connect_to_server()?;
+        // package length first
+        stream.write_all(&(2 + DOMAIN_ADDR.as_bytes().len() + 2 + 2).to_be_bytes())?;
+        // then data
         stream.write_all(&[0x03, 0x09])?;
         stream.write_all(DOMAIN_ADDR.as_bytes())?;
         stream.write_all(&local_tcp_server_addr.port().to_be_bytes())?;
@@ -155,9 +175,15 @@ mod test {
         stream.write_all(&[0x07, 0xC6])?;
         let mut buf = [0u8; 6];
         stream.read_exact(&mut buf)?;
-        assert_eq!(buf, [0x04, 0xB9, 0x00, 0x00, 0x00, 0x01]);
+        assert_eq!(buf, [0x00, 0x04, 0x04, 0xB9, 0x00, 0x01]);
+        // Allow the connection to be dropped by server.
+        stream.write_all(&[0x00, 0x02, 0x00, 0x00])?;
 
+        // Second connection.
         let mut stream = TcpStream::connect(stream.peer_addr()?)?;
+        // package length first
+        stream.write_all(&(2 + DOMAIN_ADDR.as_bytes().len() + 2 + 2).to_be_bytes())?;
+        // then data
         stream.write_all(&[0x03, 0x09])?;
         stream.write_all(DOMAIN_ADDR.as_bytes())?;
         stream.write_all(&local_tcp_server_addr.port().to_be_bytes())?;
@@ -165,13 +191,16 @@ mod test {
         stream.write_all(&[0x07, 0xC6])?;
         let mut buf = [0u8; 6];
         stream.read_exact(&mut buf)?;
-        assert_eq!(buf, [0x04, 0xB9, 0x00, 0x00, 0x00, 0x02]);
+        assert_eq!(buf, [0x00, 0x04, 0x04, 0xB9, 0x00, 0x02]);
+        // Allow the connection to be dropped by server.
+        stream.write_all(&[0x00, 0x02, 0x00, 0x00])?;
         Ok(())
     }
 
     #[test]
     fn test_shadow_stream_malformed_domain_string() -> Result<()> {
         let mut stream = start_and_connect_to_server()?;
+        stream.write_all(&[0x00, 0x05])?; // package length
         stream.write_all(&[0x03, 0x01, 0xFF, 0x00, 0x00])?;
 
         let mut buf = [0u8; 1];
@@ -187,6 +216,7 @@ mod test {
     #[test]
     fn test_shadow_stream_error() -> Result<()> {
         let mut stream = start_and_connect_to_server()?;
+        stream.write_all(&[0x00, 0x07])?; // package length
         stream.write_all(&[0x01, 127, 0, 0, 1, 0, 80])?;
 
         let mut buf = [0u8; 1];

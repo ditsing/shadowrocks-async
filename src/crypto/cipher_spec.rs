@@ -7,6 +7,7 @@ pub enum CipherType {
     Aes256GCM,
     Aes192GCM,
     Aes128GCM,
+    None,
 }
 
 impl CipherType {
@@ -16,6 +17,7 @@ impl CipherType {
             CipherType::Aes256GCM => &AES_256_GCM,
             CipherType::Aes192GCM => &AES_192_GCM,
             CipherType::Aes128GCM => &AES_128_GCM,
+            CipherType::None => &NONE,
         };
         assert_eq!(&ret.cipher_type, self);
         ret
@@ -60,6 +62,14 @@ pub static AES_128_GCM: CipherSpec = CipherSpec {
     salt_size: 16,
     nonce_size: 12,
     tag_size: 16,
+};
+
+pub static NONE: CipherSpec = CipherSpec {
+    cipher_type: CipherType::None,
+    key_size: 0,
+    salt_size: 0,
+    nonce_size: 0,
+    tag_size: 0,
 };
 
 pub fn lookup_cipher(name: &str) -> Result<CipherType> {
