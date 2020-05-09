@@ -14,7 +14,11 @@ where
 }
 
 impl<T: Hash + Sized> Hkdf<T> {
-    pub fn extract(salt_option: Option<&[u8]>, input_key_material: &[u8], hash: T) -> Self {
+    pub fn extract(
+        salt_option: Option<&[u8]>,
+        input_key_material: &[u8],
+        hash: T,
+    ) -> Self {
         let hash_len = hash.digest_length();
         // Using a vector to hold byte array.
         let salt = salt_option
@@ -83,9 +87,10 @@ impl Hash for OpensslSha {
     }
 
     fn digest(&self, key: &[u8], msg: &[u8]) -> Vec<u8> {
-        let key = openssl::pkey::PKey::hmac(key).expect("Failed to construct openssl pkey");
-        let mut signer =
-            openssl::sign::Signer::new(self.0, &key).expect("Failed to construct openssl signer");
+        let key = openssl::pkey::PKey::hmac(key)
+            .expect("Failed to construct openssl pkey");
+        let mut signer = openssl::sign::Signer::new(self.0, &key)
+            .expect("Failed to construct openssl signer");
         signer
             .update(msg)
             .expect("Failed to update message when signing");
@@ -93,9 +98,11 @@ impl Hash for OpensslSha {
     }
 }
 
-pub static SHA1_FOR_COMPATIBILITY: RingSha = RingSha(ring::hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY);
+pub static SHA1_FOR_COMPATIBILITY: RingSha =
+    RingSha(ring::hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY);
 
 #[cfg(test)]
+#[rustfmt::skip::macros(crypto_array, crypto_vec)]
 mod test {
     use super::*;
 
@@ -106,7 +113,7 @@ mod test {
         let subkey = hkdf.expand(b"ss-subkey", 32);
         assert_eq!(
             subkey,
-            &[
+            &crypto_array![
                 0x84, 0xF6, 0x36, 0xC6, 0x88, 0x73, 0xCF, 0xEB,
                 0x5B, 0xCF, 0xC1, 0x56, 0x94, 0x3F, 0x49, 0xE4,
                 0xEF, 0x16, 0x68, 0xA9, 0xEE, 0x68, 0x37, 0xD7,
@@ -122,7 +129,7 @@ mod test {
         let subkey = hkdf.expand(b"ss-subkey", 32);
         assert_eq!(
             subkey,
-            &[
+            &crypto_array![
                 0x84, 0xF6, 0x36, 0xC6, 0x88, 0x73, 0xCF, 0xEB,
                 0x5B, 0xCF, 0xC1, 0x56, 0x94, 0x3F, 0x49, 0xE4,
                 0xEF, 0x16, 0x68, 0xA9, 0xEE, 0x68, 0x37, 0xD7,
@@ -138,13 +145,13 @@ mod test {
     fn test_derive_subkey_from_salt() {
         let sha256 = RingSha(ring::hmac::HMAC_SHA256);
         let hkdf = Hkdf::extract(
-            Some(&[
+            Some(&crypto_array![
                 0xA9, 0xCA, 0xFD, 0x4F, 0x5F, 0xFD, 0x7A, 0x46,
                 0x7F, 0xFE, 0x26, 0xA1, 0xE8, 0x0A, 0xC4, 0x4D,
                 0xB0, 0x1F, 0x3C, 0x58, 0xCB, 0x4D, 0x17, 0xE0,
                 0x3E, 0xC5, 0x2A, 0x05, 0x6D, 0x4B, 0xB9, 0x54
             ]),
-            &[
+            &crypto_array![
                 0x4D, 0xC8, 0xA1, 0xA7, 0xBC, 0x06, 0x74, 0x4D,
                 0x9C, 0x6B, 0x4F, 0xB3, 0x27, 0xFF, 0x52, 0x69,
                 0x3C, 0x44, 0xF1, 0xBD, 0x94, 0xD2, 0x7D, 0xD4,
@@ -156,7 +163,7 @@ mod test {
         let subkey = hkdf.expand(b"ss-subkey", 32);
         assert_eq!(
             subkey,
-            &[
+            &crypto_array![
                 0xD4, 0xE4, 0x88, 0x52, 0xD8, 0x2B, 0x88, 0x6E,
                 0x2F, 0x8F, 0x28, 0x68, 0x83, 0x56, 0x68, 0x69,
                 0x0B, 0xFE, 0xB7, 0x55, 0xEE, 0xBD, 0x21, 0xCF,
@@ -169,13 +176,13 @@ mod test {
     fn test_derive_subkey_from_salt_openssl() {
         let sha256 = OpensslSha(openssl::hash::MessageDigest::sha256());
         let hkdf = Hkdf::extract(
-            Some(&[
+            Some(&crypto_array![
                 0xA9, 0xCA, 0xFD, 0x4F, 0x5F, 0xFD, 0x7A, 0x46,
                 0x7F, 0xFE, 0x26, 0xA1, 0xE8, 0x0A, 0xC4, 0x4D,
                 0xB0, 0x1F, 0x3C, 0x58, 0xCB, 0x4D, 0x17, 0xE0,
                 0x3E, 0xC5, 0x2A, 0x05, 0x6D, 0x4B, 0xB9, 0x54,
             ]),
-            &[
+            &crypto_array![
                 0x4D, 0xC8, 0xA1, 0xA7, 0xBC, 0x06, 0x74, 0x4D,
                 0x9C, 0x6B, 0x4F, 0xB3, 0x27, 0xFF, 0x52, 0x69,
                 0x3C, 0x44, 0xF1, 0xBD, 0x94, 0xD2, 0x7D, 0xD4,
@@ -187,7 +194,7 @@ mod test {
         let subkey = hkdf.expand(b"ss-subkey", 32);
         assert_eq!(
             subkey,
-            &[
+            &crypto_array![
                 0xD4, 0xE4, 0x88, 0x52, 0xD8, 0x2B, 0x88, 0x6E,
                 0x2F, 0x8F, 0x28, 0x68, 0x83, 0x56, 0x68, 0x69,
                 0x0B, 0xFE, 0xB7, 0x55, 0xEE, 0xBD, 0x21, 0xCF,

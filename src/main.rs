@@ -8,6 +8,11 @@ extern crate sodiumoxide;
 extern crate stderrlog;
 extern crate tokio;
 
+// Don't move! macros defined in test_utils must be included first.
+#[cfg(test)]
+#[macro_use]
+mod test_utils;
+
 mod async_io;
 mod crypto;
 mod encrypted_stream;
@@ -19,13 +24,11 @@ mod socks_server;
 use std::net::ToSocketAddrs;
 use std::time::Duration;
 
-#[cfg(test)]
-mod test_utils;
-
 use error::Error;
 
 use crate::crypto::{
-    derive_master_key_compatible, derive_master_key_pbkdf2, lookup_cipher, CipherType,
+    derive_master_key_compatible, derive_master_key_pbkdf2, lookup_cipher,
+    CipherType,
 };
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -113,9 +116,16 @@ async fn main() -> Result<()> {
     let compatible_mode = matches.is_present("compatible_mode");
     let global_config = GlobalConfig {
         master_key: if compatible_mode {
-            derive_master_key_compatible(password.as_bytes(), cipher_type.spec().key_size)?
+            derive_master_key_compatible(
+                password.as_bytes(),
+                cipher_type.spec().key_size,
+            )?
         } else {
-            derive_master_key_pbkdf2(password.as_bytes(), &[], cipher_type.spec().key_size)
+            derive_master_key_pbkdf2(
+                password.as_bytes(),
+                &[],
+                cipher_type.spec().key_size,
+            )
         },
         cipher_type,
         timeout,
@@ -124,12 +134,19 @@ async fn main() -> Result<()> {
     };
 
     if is_shadow_server {
-        let server = shadow_server::ShadowServer::create(server_socket_addr, global_config).await?;
+        let server = shadow_server::ShadowServer::create(
+            server_socket_addr,
+            global_config,
+        )
+        .await?;
         server.run().await
     } else {
-        let server =
-            socks_server::SocksServer::create(local_socket_addr, server_socket_addr, global_config)
-                .await?;
+        let server = socks_server::SocksServer::create(
+            local_socket_addr,
+            server_socket_addr,
+            global_config,
+        )
+        .await?;
         server.run().await
     }
     Ok(())

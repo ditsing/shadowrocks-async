@@ -21,7 +21,9 @@ pub trait AsyncWriteTrait {
 }
 
 #[async_trait]
-impl<T: AsyncReadExt + std::marker::Send + std::marker::Unpin + ?Sized> AsyncReadTrait for T {
+impl<T: AsyncReadExt + std::marker::Send + std::marker::Unpin + ?Sized>
+    AsyncReadTrait for T
+{
     async fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         <T as AsyncReadExt>::read(self, buf).await
     }
@@ -32,7 +34,9 @@ impl<T: AsyncReadExt + std::marker::Send + std::marker::Unpin + ?Sized> AsyncRea
 }
 
 #[async_trait]
-impl<T: AsyncWriteExt + std::marker::Send + std::marker::Unpin + ?Sized> AsyncWriteTrait for T {
+impl<T: AsyncWriteExt + std::marker::Send + std::marker::Unpin + ?Sized>
+    AsyncWriteTrait for T
+{
     async fn write(&mut self, data: &[u8]) -> std::io::Result<usize> {
         <T as AsyncWriteExt>::write(self, data).await
     }
@@ -43,8 +47,14 @@ impl<T: AsyncWriteExt + std::marker::Send + std::marker::Unpin + ?Sized> AsyncWr
 }
 
 pub trait SplitIntoAsync {
-    type R: AsyncReadTrait + std::marker::Send + std::marker::Unpin + std::marker::Sized;
-    type W: AsyncWriteTrait + std::marker::Send + std::marker::Unpin + std::marker::Sized;
+    type R: AsyncReadTrait
+        + std::marker::Send
+        + std::marker::Unpin
+        + std::marker::Sized;
+    type W: AsyncWriteTrait
+        + std::marker::Send
+        + std::marker::Unpin
+        + std::marker::Sized;
 
     fn into_split(self) -> (Self::R, Self::W);
 }
@@ -58,7 +68,10 @@ impl SplitIntoAsync for TcpStream {
     }
 }
 
-pub async fn copy(mut reader: impl AsyncReadTrait, mut writer: impl AsyncWriteTrait) -> Result<()> {
+pub async fn copy(
+    mut reader: impl AsyncReadTrait,
+    mut writer: impl AsyncWriteTrait,
+) -> Result<()> {
     let mut buf = [0u8; 8192];
     loop {
         info!("Copy reading bytes ...");
@@ -83,7 +96,8 @@ pub fn proxy(
         let (remote_reader, remote_writer) = remote.into_split();
         let upstream = copy(local_reader, remote_writer);
         let downstream = copy(remote_reader, local_writer);
-        let (upstream_result, downstream_result) = tokio::join!(upstream, downstream);
+        let (upstream_result, downstream_result) =
+            tokio::join!(upstream, downstream);
         if let Err(e) = upstream_result {
             warn!("Error proxying data, upstream failed: {}", e);
         }

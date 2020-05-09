@@ -4,9 +4,9 @@ use log::{debug, error, info};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::stream::StreamExt;
 
-use crate::{Error, Result, GlobalConfig};
 use crate::encrypted_stream::EncryptedStream;
 use crate::socks5_addr::Socks5Addr;
+use crate::{Error, GlobalConfig, Result};
 
 pub struct ShadowServer {
     tcp_listener: TcpListener,
@@ -15,7 +15,10 @@ pub struct ShadowServer {
 }
 
 impl ShadowServer {
-    pub async fn create(addr: SocketAddr, global_config: GlobalConfig) -> Result<Self> {
+    pub async fn create(
+        addr: SocketAddr,
+        global_config: GlobalConfig,
+    ) -> Result<Self> {
         info!("Creating shadow server ...");
         info!("Starting shadow server at address {} ...", addr);
         Ok(Self {
@@ -33,9 +36,11 @@ impl ShadowServer {
             stream,
             self.global_config.master_key.as_slice(),
             self.global_config.cipher_type,
-        ).await?;
+        )
+        .await?;
 
-        let target_addr = Socks5Addr::read_and_parse_address(&mut encrypted_stream).await?;
+        let target_addr =
+            Socks5Addr::read_and_parse_address(&mut encrypted_stream).await?;
 
         debug!("Processing request from {} to {:?}", peer_addr, target_addr);
 
@@ -46,7 +51,12 @@ impl ShadowServer {
                 let domain_str_result = std::str::from_utf8(&domain_buf);
                 let domain_str = match domain_str_result {
                     Ok(domain_str) => domain_str,
-                    Err(e) => return Err(Error::MalformedDomainString(domain_buf.to_owned(), e)),
+                    Err(e) => {
+                        return Err(Error::MalformedDomainString(
+                            domain_buf.to_owned(),
+                            e,
+                        ))
+                    }
                 };
                 info!("Looking up host ...");
                 TcpStream::connect((domain_str, *port)).await?
@@ -110,7 +120,10 @@ mod test {
             rt.block_on(async {
                 // The wrapping part must be done inside a tokio runtime environment.
                 let server = ShadowServer {
-                    tcp_listener: tokio::net::TcpListener::from_std(tcp_listener).unwrap(),
+                    tcp_listener: tokio::net::TcpListener::from_std(
+                        tcp_listener,
+                    )
+                    .unwrap(),
 
                     global_config: GlobalConfig {
                         master_key: vec![],
@@ -128,7 +141,8 @@ mod test {
 
     #[test]
     fn test_shadow_stream() -> Result<()> {
-        let (local_tcp_server_addr, _tcp_server_running) = run_local_tcp_server()?;
+        let (local_tcp_server_addr, _tcp_server_running) =
+            run_local_tcp_server()?;
         let socks5_addr = match local_tcp_server_addr {
             SocketAddr::V4(socket_addr_v4) => Socks5Addr::V4(socket_addr_v4),
             SocketAddr::V6(socket_addr_v6) => Socks5Addr::V6(socket_addr_v6),
@@ -161,10 +175,13 @@ mod test {
 
     #[test]
     fn test_shadow_stream_domain() -> Result<()> {
-        let (local_tcp_server_addr, _tcp_server_running) = run_local_tcp_server()?;
+        let (local_tcp_server_addr, _tcp_server_running) =
+            run_local_tcp_server()?;
         let mut stream = start_and_connect_to_server()?;
         // package length first
-        stream.write_all(&(2 + DOMAIN_ADDR.as_bytes().len() + 2 + 2).to_be_bytes())?;
+        stream.write_all(
+            &(2 + DOMAIN_ADDR.as_bytes().len() + 2 + 2).to_be_bytes(),
+        )?;
         // then data
         stream.write_all(&[0x03, 0x09])?;
         stream.write_all(DOMAIN_ADDR.as_bytes())?;
@@ -180,7 +197,9 @@ mod test {
         // Second connection.
         let mut stream = TcpStream::connect(stream.peer_addr()?)?;
         // package length first
-        stream.write_all(&(2 + DOMAIN_ADDR.as_bytes().len() + 2 + 2).to_be_bytes())?;
+        stream.write_all(
+            &(2 + DOMAIN_ADDR.as_bytes().len() + 2 + 2).to_be_bytes(),
+        )?;
         // then data
         stream.write_all(&[0x03, 0x09])?;
         stream.write_all(DOMAIN_ADDR.as_bytes())?;

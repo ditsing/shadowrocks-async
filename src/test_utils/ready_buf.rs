@@ -20,7 +20,8 @@ impl AsyncRead for ReadyBuf {
             Some(mut data) => {
                 let mut len = 0;
                 while len < buf.len() && !data.is_empty() {
-                    buf[len] = data.pop_front().expect("deque should be non-empty.");
+                    buf[len] =
+                        data.pop_front().expect("deque should be non-empty.");
                     len += 1;
                 }
                 if !data.is_empty() {
@@ -44,11 +45,17 @@ impl AsyncWrite for ReadyBuf {
         Poll::Ready(Ok(buf.len()))
     }
 
-    fn poll_flush(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
+    fn poll_flush(
+        self: Pin<&mut Self>,
+        _cx: &mut Context<'_>,
+    ) -> Poll<Result<(), Error>> {
         Poll::Ready(Ok(()))
     }
 
-    fn poll_shutdown(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
+    fn poll_shutdown(
+        self: Pin<&mut Self>,
+        _cx: &mut Context<'_>,
+    ) -> Poll<Result<(), Error>> {
         Poll::Ready(Ok(()))
     }
 }

@@ -16,28 +16,30 @@ pub enum Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Error::UnsupportedSocksVersion(v) =>
-                write!(f, "Unsupported SOCKS version {}", v),
-            Error::UnexpectedReservedBit(rsv) =>
-                write!(f, "Unexpected reserved bit {:#02X}", rsv),
-            Error::IOError(e) =>
-                write!(f, "IO error: {}", e),
-            Error::MalformedDomainString(v, e) =>
-                write!(f, "Malformed domain string {:?}: {}", v, e),
-            Error::UnknownHost(host) =>
-                write!(f, "Cannot resolve host {}", host),
-            Error::RelayAlreadyRunning =>
-                write!(f, "Operation not allowed after the relay started running"),
-            Error::UnsupportedAddressType(addr_type) =>
-                write!(f, "Unsupported address type {}", addr_type),
-            Error::KeyDerivationError =>
-                write!(f, "Key derivation error"),
-            Error::EncryptionError =>
-                write!(f, "Encryption error"),
-            Error::DecryptionError =>
-                write!(f, "Decryption error"),
-            Error::UnknownCipher(s) =>
-                write!(f, "Unknown cipher {}", s),
+            Error::UnsupportedSocksVersion(v) => {
+                write!(f, "Unsupported SOCKS version {}", v)
+            }
+            Error::UnexpectedReservedBit(rsv) => {
+                write!(f, "Unexpected reserved bit {:#02X}", rsv)
+            }
+            Error::IOError(e) => write!(f, "IO error: {}", e),
+            Error::MalformedDomainString(v, e) => {
+                write!(f, "Malformed domain string {:?}: {}", v, e)
+            }
+            Error::UnknownHost(host) => {
+                write!(f, "Cannot resolve host {}", host)
+            }
+            Error::RelayAlreadyRunning => write!(
+                f,
+                "Operation not allowed after the relay started running"
+            ),
+            Error::UnsupportedAddressType(addr_type) => {
+                write!(f, "Unsupported address type {}", addr_type)
+            }
+            Error::KeyDerivationError => write!(f, "Key derivation error"),
+            Error::EncryptionError => write!(f, "Encryption error"),
+            Error::DecryptionError => write!(f, "Decryption error"),
+            Error::UnknownCipher(s) => write!(f, "Unknown cipher {}", s),
         }
     }
 }
