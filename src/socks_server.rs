@@ -1,5 +1,6 @@
 use std::io::ErrorKind;
 use std::net::{Shutdown, SocketAddr, ToSocketAddrs};
+use std::sync::Arc;
 
 use log::{debug, error, info};
 use tokio::net::{TcpListener, TcpStream};
@@ -164,9 +165,9 @@ impl SocksServer {
     }
 
     async fn serve_socks5_stream(
-        &mut self,
         mut stream: TcpStream,
         remote_addr: SocketAddr,
+        global_config: Arc<GlobalConfig>,
     ) -> Result<()> {
         let available_methods =
             Self::read_and_parse_first_request(&mut stream).await?;
@@ -275,8 +276,8 @@ impl SocksServer {
                 let local_to_remote_port = remote_stream.local_addr()?.port();
                 let mut remote_encrypted_stream = EncryptedStream::establish(
                     remote_stream,
-                    self.global_config.master_key.as_slice(),
-                    self.global_config.cipher_type,
+                    global_config.master_key.as_slice(),
+                    global_config.cipher_type,
                 )
                 .await?;
 
@@ -331,16 +332,24 @@ impl SocksServer {
 
     pub async fn run(mut self) {
         info!("Running socks server loop ...");
+        let base_global_config = Arc::new(self.global_config);
         while let Some(stream) = self.tcp_listener.next().await {
             match stream {
                 Ok(stream) => {
-                    info!("New connection");
-                    let response = self
-                        .serve_socks5_stream(stream, self.remote_addr.clone())
+                    let remote_addr = self.remote_addr.clone();
+                    let global_config = base_global_config.clone();
+                    tokio::spawn(async move {
+                        info!("New connection");
+                        let response = Self::serve_socks5_stream(
+                            stream,
+                            remote_addr,
+                            global_config,
+                        )
                         .await;
-                    if let Err(e) = response {
-                        error!("Error serving client: {}", e);
-                    }
+                        if let Err(e) = response {
+                            error!("Error serving client: {}", e);
+                        }
+                    });
                 }
                 Err(e) => {
                     error!("Error accepting connection: {}", e);

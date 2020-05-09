@@ -1,4 +1,5 @@
 use std::net::SocketAddr;
+use std::sync::Arc;
 
 use log::{debug, error, info};
 use tokio::net::{TcpListener, TcpStream};
@@ -27,15 +28,18 @@ impl ShadowServer {
         })
     }
 
-    async fn serve_shadow_stream(&mut self, stream: TcpStream) -> Result<()> {
+    async fn serve_shadow_stream(
+        stream: TcpStream,
+        global_config: Arc<GlobalConfig>,
+    ) -> Result<()> {
         info!("Serving shadow stream ...");
         let local_addr = stream.local_addr()?;
         let peer_addr = stream.peer_addr()?;
 
         let mut encrypted_stream = EncryptedStream::establish(
             stream,
-            self.global_config.master_key.as_slice(),
-            self.global_config.cipher_type,
+            global_config.master_key.as_slice(),
+            global_config.cipher_type,
         )
         .await?;
 
@@ -78,14 +82,20 @@ impl ShadowServer {
 
     pub async fn run(mut self) {
         info!("Running shadow server loop ...");
+        let base_global_config = Arc::new(self.global_config);
         while let Some(stream) = self.tcp_listener.next().await {
             match stream {
                 Ok(stream) => {
-                    info!("New connection");
-                    let response = self.serve_shadow_stream(stream).await;
-                    if let Err(e) = response {
-                        error!("Error serving shadow client: {}", e);
-                    }
+                    let global_config = base_global_config.clone();
+                    tokio::spawn(async move {
+                        info!("New connection");
+                        let response =
+                            Self::serve_shadow_stream(stream, global_config)
+                                .await;
+                        if let Err(e) = response {
+                            error!("Error serving shadow client: {}", e);
+                        }
+                    });
                 }
                 Err(e) => {
                     error!("Error accepting shadow connection: {}", e);
