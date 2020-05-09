@@ -7,6 +7,8 @@ use log::info;
 
 use crate::Result;
 
+// Run a single-threaded TCP server that reads two bytes and writes four bytes.
+// The returned bytes are either [12, 09] + counter, or [00, 02] + counter.
 pub fn run_local_tcp_server() -> Result<(SocketAddr, Arc<AtomicBool>)> {
     let tcp_listener = TcpListener::bind("127.0.0.1:0")?;
     let local_addr = tcp_listener.local_addr()?;

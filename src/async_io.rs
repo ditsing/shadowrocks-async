@@ -68,6 +68,7 @@ impl SplitIntoAsync for TcpStream {
     }
 }
 
+// Keep copying data from reader to writer, read and write up to 8KB data each time.
 pub async fn copy(
     mut reader: impl AsyncReadTrait,
     mut writer: impl AsyncWriteTrait,
@@ -86,6 +87,8 @@ pub async fn copy(
     }
 }
 
+// Start a new task that proxies data between local and remote streams.
+// This is not an `async` function. It should not block, either, assuming tokio::spawn() is fast.
 pub fn proxy(
     local: impl SplitIntoAsync + std::marker::Send + 'static,
     remote: impl SplitIntoAsync + std::marker::Send + 'static,

@@ -5,6 +5,8 @@ use std::io::Error;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::macros::support::{Pin, Poll};
 
+// A buffer that supports both AsyncRead and AsyncWrite.
+// Could possibly be replaced by bytes::BufMut or tokio_test::io::Mock.
 pub struct ReadyBuf {
     buf_list: VecDeque<VecDeque<u8>>,
 }

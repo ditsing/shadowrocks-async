@@ -9,6 +9,7 @@ use crate::encrypted_stream::EncryptedStream;
 use crate::socks5_addr::Socks5Addr;
 use crate::{Error, GlobalConfig, Result};
 
+/// A proxy server that sits on the remote server, close to the destination of the connection.
 pub struct ShadowServer {
     tcp_listener: TcpListener,
 

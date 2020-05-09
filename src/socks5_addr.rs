@@ -6,6 +6,8 @@ use log::{debug, error, info};
 use crate::async_io::AsyncReadTrait;
 use crate::{Error, Result};
 
+/// An address used in the Socks5 protocal, either an IPV4 address, or an IPV6 address, or a domain
+/// that could be resolved.
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub enum Socks5Addr {
     V4(SocketAddrV4),

@@ -1,6 +1,7 @@
 use crate::crypto::Crypter;
 use crate::error::Error;
 
+// A crypter that simply passes data on.
 pub struct PlaintextCrypter;
 
 impl Crypter for PlaintextCrypter {

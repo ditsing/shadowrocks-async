@@ -15,7 +15,7 @@ use crate::Result;
 
 const LENGTH_SIZE: usize = 2;
 
-pub async fn read_and_derive_crypter(
+async fn read_and_derive_crypter(
     stream: &mut (impl AsyncReadTrait + std::marker::Unpin),
     master_key: &[u8],
     cipher_type: CipherType,
@@ -33,7 +33,7 @@ pub async fn read_and_derive_crypter(
     Ok(crypter)
 }
 
-pub async fn read_encrypt(
+async fn read_encrypt(
     stream: &mut (impl AsyncReadTrait + std::marker::Unpin),
     crypter: &mut Box<dyn Crypter>,
 ) -> Result<Vec<u8>> {
@@ -54,7 +54,7 @@ pub async fn read_encrypt(
     crypter.decrypt(body_buf.as_slice())
 }
 
-pub async fn build_and_write_crypter(
+async fn build_and_write_crypter(
     stream: &mut (impl AsyncWriteTrait + std::marker::Unpin),
     master_key: &[u8],
     cipher_type: CipherType,
@@ -73,7 +73,7 @@ pub async fn build_and_write_crypter(
     Ok(crypter)
 }
 
-pub async fn write_encrypt(
+async fn write_encrypt(
     stream: &mut (impl AsyncWriteTrait + std::marker::Unpin),
     crypter: &mut Box<dyn Crypter>,
     data: &[u8],
@@ -127,6 +127,8 @@ impl EncryptedStream {
         }
     }
 
+    /// Establishing an encrypted TCP connection to `stream`. We'll first exchange salt with remote,
+    /// then build encrypters with the salt. Different salt are used for reading and writing.
     pub async fn establish(
         mut stream: TcpStream,
         master_key: &[u8],
