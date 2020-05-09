@@ -7,6 +7,7 @@ pub enum CipherType {
     Aes256GCM,
     Aes192GCM,
     Aes128GCM,
+    #[cfg(test)]
     None,
 }
 
@@ -17,6 +18,7 @@ impl CipherType {
             CipherType::Aes256GCM => &AES_256_GCM,
             CipherType::Aes192GCM => &AES_192_GCM,
             CipherType::Aes128GCM => &AES_128_GCM,
+            #[cfg(test)]
             CipherType::None => &NONE,
         };
         assert_eq!(&ret.cipher_type, self);
@@ -64,6 +66,7 @@ pub static AES_128_GCM: CipherSpec = CipherSpec {
     tag_size: 16,
 };
 
+#[cfg(test)]
 pub static NONE: CipherSpec = CipherSpec {
     cipher_type: CipherType::None,
     key_size: 0,

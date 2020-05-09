@@ -15,6 +15,7 @@ mod sodium_crypter;
 
 pub enum NonceType {
     Sequential,
+    #[allow(dead_code)]
     Zero,
 }
 

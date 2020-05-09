@@ -75,6 +75,7 @@ impl Hash for RingSha {
 
 pub struct OpensslSha(pub openssl::hash::MessageDigest);
 
+#[allow(dead_code)]
 impl OpensslSha {
     pub fn sha1() -> Self {
         OpensslSha(openssl::hash::MessageDigest::sha1())
@@ -98,6 +99,7 @@ impl Hash for OpensslSha {
     }
 }
 
+#[allow(dead_code)]
 pub static SHA1_FOR_COMPATIBILITY: RingSha =
     RingSha(ring::hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY);
 
