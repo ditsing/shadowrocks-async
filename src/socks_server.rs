@@ -332,6 +332,8 @@ impl SocksServer {
 
     pub async fn run(mut self) {
         info!("Running socks server loop ...");
+        info!("Timeout of {:?} is ignored.", self.global_config.timeout);
+        info!("Connection will be kept alive until there is an error.");
         let base_global_config = Arc::new(self.global_config);
         while let Some(stream) = self.tcp_listener.next().await {
             match stream {

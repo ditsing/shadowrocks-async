@@ -37,7 +37,10 @@ pub struct GlobalConfig {
     master_key: Vec<u8>,
     cipher_type: CipherType,
     timeout: Duration,
+    #[allow(dead_code)]
     fast_open: bool,
+    // TODO: find the correct way to do encryption.
+    #[allow(dead_code)]
     compatible_mode: bool,
 }
 
