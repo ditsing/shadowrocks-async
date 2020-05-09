@@ -12,7 +12,7 @@ use crate::socks5_addr::{Socks5Addr, Socks5AddrType};
 
 pub struct SocksServer {
     remote_addr: SocketAddr,
-    tcp_listener: Option<TcpListener>,
+    tcp_listener: TcpListener,
 
     global_config: GlobalConfig,
 }
@@ -81,7 +81,7 @@ impl SocksServer {
             Self {
                 remote_addr: remote.to_socket_addrs()?.next()
                     .expect("Expecting a valid server address and port as remote"),
-                tcp_listener: Some(TcpListener::bind(addr).await?),
+                tcp_listener: TcpListener::bind(addr).await?,
 
                 global_config,
             }
@@ -288,10 +288,8 @@ impl SocksServer {
     }
 
     pub async fn run(mut self) {
-        let mut tcp_listener =
-            self.tcp_listener.take().expect("Expecting an initialized tcp server.");
         info!("Running socks server loop ...");
-        while let Some(stream) = tcp_listener.next().await {
+        while let Some(stream) = self.tcp_listener.next().await {
             match stream {
                 Ok(stream) => {
                     info!("New connection");
@@ -342,7 +340,7 @@ mod test {
                 // The wrapping part must be done inside a tokio runtime environment.
                 let server = SocksServer {
                     remote_addr,
-                    tcp_listener: Some(tokio::net::TcpListener::from_std(tcp_listener).unwrap()),
+                    tcp_listener: tokio::net::TcpListener::from_std(tcp_listener).unwrap(),
                     global_config: GlobalConfig {
                         master_key: vec![],
                         cipher_type: CipherType::None,
