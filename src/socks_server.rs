@@ -390,7 +390,7 @@ mod test {
                     tcp_listener: tokio::net::TcpListener::from_std(
                         tcp_listener,
                     )
-                    .unwrap(),
+                    .expect("Creating tcp listener should not fail"),
                     global_config: GlobalConfig {
                         master_key: vec![],
                         cipher_type: CipherType::None,

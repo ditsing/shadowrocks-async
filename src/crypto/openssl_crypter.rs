@@ -279,8 +279,8 @@ mod test {
             let expected_size = crypter.expected_ciphertext_length(data.len());
             assert_eq!(
                 expected_size,
-                Crypter::encrypt(&mut crypter, data.as_slice(),)
-                    .unwrap()
+                Crypter::encrypt(&mut crypter, data.as_slice())
+                    .expect("encryption should not fail")
                     .len()
             );
         }

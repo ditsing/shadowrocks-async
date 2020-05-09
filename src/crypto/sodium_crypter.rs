@@ -157,7 +157,10 @@ mod test {
             let expected_size = crypter.expected_ciphertext_length(data.len());
             assert_eq!(
                 expected_size,
-                crypter.encrypt(data.as_slice()).unwrap().len()
+                crypter
+                    .encrypt(data.as_slice())
+                    .expect("encryption should not fail")
+                    .len()
             );
         }
     }

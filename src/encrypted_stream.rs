@@ -41,8 +41,12 @@ pub async fn read_encrypt(
     stream.read_exact(buf.as_mut_slice()).await?;
 
     let length_bytes = crypter.decrypt(buf.as_slice())?;
-    let length = u16::from_be_bytes(length_bytes.as_slice().try_into().unwrap())
-        as usize;
+    let length = u16::from_be_bytes(
+        length_bytes
+            .as_slice()
+            .try_into()
+            .expect("Array length should be enough"),
+    ) as usize;
 
     let mut body_buf = vec![0u8; crypter.expected_ciphertext_length(length)];
     stream.read_exact(body_buf.as_mut_slice()).await?;
