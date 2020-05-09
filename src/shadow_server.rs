@@ -156,8 +156,6 @@ mod test {
         let mut buf = [0u8; 6];
         stream.read_exact(&mut buf)?;
         assert_eq!(buf, [0x00, 0x04, 0x04, 0xB9, 0x00, 0x01]);
-        // Allow the connection to be dropped by server.
-        stream.write_all(&[0x00, 0x02, 0x00, 0x00])?;
 
         // Second connection.
         let mut stream = TcpStream::connect(stream.peer_addr()?)?;
@@ -168,8 +166,6 @@ mod test {
         let mut buf = [0u8; 6];
         stream.read_exact(&mut buf)?;
         assert_eq!(buf, [0x00, 0x04, 0x04, 0xB9, 0x00, 0x02]);
-        // Allow the connection to be dropped by server.
-        stream.write_all(&[0x00, 0x02, 0x00, 0x00])?;
         Ok(())
     }
 
@@ -191,8 +187,6 @@ mod test {
         let mut buf = [0u8; 6];
         stream.read_exact(&mut buf)?;
         assert_eq!(buf, [0x00, 0x04, 0x04, 0xB9, 0x00, 0x01]);
-        // Allow the connection to be dropped by server.
-        stream.write_all(&[0x00, 0x02, 0x00, 0x00])?;
 
         // Second connection.
         let mut stream = TcpStream::connect(stream.peer_addr()?)?;
@@ -209,8 +203,6 @@ mod test {
         let mut buf = [0u8; 6];
         stream.read_exact(&mut buf)?;
         assert_eq!(buf, [0x00, 0x04, 0x04, 0xB9, 0x00, 0x02]);
-        // Allow the connection to be dropped by server.
-        stream.write_all(&[0x00, 0x02, 0x00, 0x00])?;
         Ok(())
     }
 

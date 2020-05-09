@@ -33,9 +33,7 @@ pub fn run_local_tcp_server() -> Result<(SocketAddr, Arc<AtomicBool>)> {
                     stream.write_all(
                         &[prefix_bytes, &count.to_be_bytes()].concat(),
                     )?;
-
-                    // Block until there is data, then exit.
-                    stream.read_exact(&mut buf)?;
+                    stream.flush()?;
                 }
                 Err(e) => return Err(e),
             }

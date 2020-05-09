@@ -644,9 +644,6 @@ mod test {
         stream.read_exact(&mut buf)?;
         assert_eq!(buf, [0x00, 0x01]);
 
-        // Allow the connection to be dropped by server.
-        stream.write_all(&[])?;
-
         Ok(())
     }
 }
