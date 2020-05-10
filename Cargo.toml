@@ -3,8 +3,15 @@ name = "shadowrocks"
 version = "0.1.0"
 authors = ["Jing Yang <ditsing@gmail.com>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "Shadowsocks port in pure async/.await Rust."
+documentation = ""
+readme = "README.md"
+homepage = "https://github.com/ditsing/shadowrocks-async"
+repository = "https://github.com/ditsing/shadowrocks-async"
+license = "MIT"
+license-file = "MIT-LICENSE"
+keywords = ["shadowsocks"]
+categories = [""]
 
 [dependencies]
 async-trait = "0.1"
