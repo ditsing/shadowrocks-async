@@ -24,10 +24,11 @@ async fn read_and_derive_crypter(
     let mut salt = vec![0u8; cipher_spec.salt_size];
     stream.read_exact(&mut salt).await?;
 
-    let subkey = crate::crypto::derive_subkey_compatible(
+    let subkey = crate::crypto::derive_subkey(
         master_key,
         &salt,
         cipher_spec.key_size,
+        true,
     );
     let crypter = create_crypter(&subkey, NonceType::Sequential, cipher_type);
     Ok(crypter)
@@ -64,10 +65,11 @@ async fn build_and_write_crypter(
     (rand::os::OsRng::new()?).fill_bytes(&mut salt);
     stream.write_all(&salt).await?;
 
-    let subkey = crate::crypto::derive_subkey_compatible(
+    let subkey = crate::crypto::derive_subkey(
         master_key,
         &salt,
         cipher_spec.key_size,
+        true,
     );
     let crypter = create_crypter(&subkey, NonceType::Sequential, cipher_type);
     Ok(crypter)

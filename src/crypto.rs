@@ -2,9 +2,9 @@ pub use cipher_spec::lookup_cipher;
 pub use cipher_spec::CipherSpec;
 pub use cipher_spec::CipherType;
 
-use crate::crypto::cipher_spec::AES_256_GCM;
 use crate::Error;
 use crate::Result;
+use cipher_spec::AES_256_GCM;
 
 mod cipher_spec;
 mod hkdf;
@@ -133,16 +133,35 @@ pub fn derive_master_key_compatible(
 
 const SHADOW_INFO: &'static [u8] = b"ss-subkey";
 
-// The subkey derivation method used by the original Shadowsocks Python version.
-// Subkey is derived from the master key using HKDF method. See crypto/hkdf.rs for more details.
-pub fn derive_subkey_compatible(
+fn derive_subkey_with_algorithm(
     master_key: &[u8],
     salt: &[u8],
     key_size: usize,
+    use_sha1: bool,
 ) -> Vec<u8> {
-    let hkdf =
-        hkdf::Hkdf::extract(Some(salt), master_key, hkdf::OpensslSha::sha1());
+    let algorithm = if use_sha1 {
+        hkdf::OpensslSha::sha1()
+    } else {
+        hkdf::OpensslSha::sha256()
+    };
+    let hkdf = hkdf::Hkdf::extract(Some(salt), master_key, algorithm);
     hkdf.expand(SHADOW_INFO, key_size)
+}
+
+// Subkey is derived from the master key using HKDF method. See crypto/hkdf.rs for more details.
+// SHA1 is deemed insecure in modern computing. SHA256 is recommended instead.
+pub fn derive_subkey(
+    master_key: &[u8],
+    salt: &[u8],
+    key_size: usize,
+    compatible_mode: bool,
+) -> Vec<u8> {
+    derive_subkey_with_algorithm(
+        master_key,
+        salt,
+        key_size,
+        /* use_sha1= */ compatible_mode,
+    )
 }
 
 #[cfg(test)]
@@ -153,6 +172,14 @@ mod test {
     };
 
     use super::*;
+
+    fn derive_subkey_compatible(
+        master_key: &[u8],
+        salt: &[u8],
+        key_size: usize,
+    ) -> Vec<u8> {
+        derive_subkey(master_key, salt, key_size, true)
+    }
 
     // Expected keys are copied from the output of the Python version.
     #[test]

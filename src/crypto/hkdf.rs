@@ -75,10 +75,13 @@ impl Hash for RingSha {
 
 pub struct OpensslSha(pub openssl::hash::MessageDigest);
 
-#[allow(dead_code)]
 impl OpensslSha {
     pub fn sha1() -> Self {
         OpensslSha(openssl::hash::MessageDigest::sha1())
+    }
+
+    pub fn sha256() -> Self {
+        OpensslSha(openssl::hash::MessageDigest::sha256())
     }
 }
 
@@ -102,6 +105,8 @@ impl Hash for OpensslSha {
 #[allow(dead_code)]
 pub static SHA1_FOR_COMPATIBILITY: RingSha =
     RingSha(ring::hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY);
+#[allow(dead_code)]
+pub static SHA256: RingSha = RingSha(ring::hmac::HMAC_SHA256);
 
 #[cfg(test)]
 #[rustfmt::skip::macros(crypto_array, crypto_vec)]
@@ -145,7 +150,6 @@ mod test {
     // key derived the same way.
     #[test]
     fn test_derive_subkey_from_salt() {
-        let sha256 = RingSha(ring::hmac::HMAC_SHA256);
         let hkdf = Hkdf::extract(
             Some(&crypto_array![
                 0xA9, 0xCA, 0xFD, 0x4F, 0x5F, 0xFD, 0x7A, 0x46,
@@ -159,7 +163,7 @@ mod test {
                 0x3C, 0x44, 0xF1, 0xBD, 0x94, 0xD2, 0x7D, 0xD4,
                 0xD6, 0xE1, 0x90, 0xAF, 0x65, 0x71, 0x99, 0x7D
             ],
-            sha256,
+            SHA256,
         );
 
         let subkey = hkdf.expand(b"ss-subkey", 32);
@@ -176,7 +180,6 @@ mod test {
 
     #[test]
     fn test_derive_subkey_from_salt_openssl() {
-        let sha256 = OpensslSha(openssl::hash::MessageDigest::sha256());
         let hkdf = Hkdf::extract(
             Some(&crypto_array![
                 0xA9, 0xCA, 0xFD, 0x4F, 0x5F, 0xFD, 0x7A, 0x46,
@@ -190,7 +193,7 @@ mod test {
                 0x3C, 0x44, 0xF1, 0xBD, 0x94, 0xD2, 0x7D, 0xD4,
                 0xD6, 0xE1, 0x90, 0xAF, 0x65, 0x71, 0x99, 0x7D,
             ],
-            sha256,
+            OpensslSha::sha256(),
         );
 
         let subkey = hkdf.expand(b"ss-subkey", 32);
