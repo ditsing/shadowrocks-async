@@ -5,7 +5,7 @@ Shadowrocks
 Shadowrocks is a [`shadowsocks`](http://shadowsocks.org) port written in pure `async/.await` Rust.
 At the moment it only does the basics: tunneling from a local SOCKS5 server to a remote server, with
 proper encryption. The implementation is thoroughly tested and is compatible with the [original
-python version][1].
+python version][1] with `--compatible-mode`.
 
 The official Rust implementation of `shadowsocks` can be found [here][2]. It has way more
 functionality.

@@ -19,6 +19,7 @@ async fn read_and_derive_crypter(
     stream: &mut (impl AsyncReadTrait + std::marker::Unpin),
     master_key: &[u8],
     cipher_type: CipherType,
+    compatible_mode: bool,
 ) -> Result<Box<dyn Crypter>> {
     let cipher_spec = cipher_type.spec();
     let mut salt = vec![0u8; cipher_spec.salt_size];
@@ -28,7 +29,7 @@ async fn read_and_derive_crypter(
         master_key,
         &salt,
         cipher_spec.key_size,
-        true,
+        compatible_mode,
     );
     let crypter = create_crypter(&subkey, NonceType::Sequential, cipher_type);
     Ok(crypter)
@@ -59,6 +60,7 @@ async fn build_and_write_crypter(
     stream: &mut (impl AsyncWriteTrait + std::marker::Unpin),
     master_key: &[u8],
     cipher_type: CipherType,
+    compatible_mode: bool,
 ) -> Result<Box<dyn Crypter>> {
     let cipher_spec = cipher_type.spec();
     let mut salt = vec![0u8; cipher_spec.salt_size];
@@ -69,7 +71,7 @@ async fn build_and_write_crypter(
         master_key,
         &salt,
         cipher_spec.key_size,
-        true,
+        compatible_mode,
     );
     let crypter = create_crypter(&subkey, NonceType::Sequential, cipher_type);
     Ok(crypter)
@@ -135,6 +137,7 @@ impl EncryptedStream {
         mut stream: TcpStream,
         master_key: &[u8],
         cipher_type: CipherType,
+        compatible_mode: bool,
     ) -> Result<Self> {
         #[cfg(test)]
         if cipher_type == CipherType::None {
@@ -152,12 +155,20 @@ impl EncryptedStream {
         // Reading blocks the process but write does not. So we first write then read.
         info!("Writing data to remote crypter ...");
         let encrypter =
-            build_and_write_crypter(&mut stream, master_key, cipher_type)
+            build_and_write_crypter(&mut stream, master_key, cipher_type, compatible_mode)
                 .await?;
         info!("Reading data to create crypter ...");
         let decrypter =
-            read_and_derive_crypter(&mut stream, master_key, cipher_type)
+            read_and_derive_crypter(&mut stream, master_key, cipher_type, compatible_mode)
                 .await?;
+
+        // Swap decrypter and encrypter if we are not in compatible mode, to defend against
+        // replay attack.
+        let (encrypter, decrypter) = if compatible_mode {
+            (encrypter, decrypter)
+        } else {
+            (decrypter, encrypter)
+        };
         let encrypted_stream =
             EncryptedStream::create(stream, decrypter, encrypter);
         Ok(encrypted_stream)
@@ -268,6 +279,7 @@ mod test {
             &mut data.as_ref(),
             b"key",
             CipherType::Aes256GCM,
+            true,
         )
         .await?;
 
@@ -323,6 +335,7 @@ mod test {
                 &mut ready_buf,
                 b"key",
                 CipherType::Aes256GCM,
+                true,
             )
             .await?;
             encrypter.encrypt(&[1u8; 32])?
@@ -337,6 +350,7 @@ mod test {
                 &mut read_buf,
                 b"key",
                 CipherType::Aes256GCM,
+                true,
             )
             .await?;
             decrypter.decrypt(ciphertext.as_slice())?

@@ -39,8 +39,6 @@ pub struct GlobalConfig {
     timeout: Duration,
     #[allow(dead_code)]
     fast_open: bool,
-    // TODO: find the correct way to do encryption.
-    #[allow(dead_code)]
     compatible_mode: bool,
 }
 
@@ -75,8 +73,8 @@ async fn main() -> Result<()> {
             -m [METHOD]              'encryption method to use, default: aes-256-gcm. Other valid values are: aes-128-gcm, aes-192-gcm, aes-256-gcm, chacha20-ietf-poly1305'
             -t [TIMEOUT]             'timeout in seconds, default: 300'
 
-            --fast-open              'use TCP_FASTOPEN, requires Linux 3.7+'
-            --compatible-mode        'keep compatible with Shadowsocks in encryption-related areas, default: true'
+            --fast-open              'use TCP_FASTOPEN, requires Linux 3.7+, default: false'
+            --compatible-mode        'keep compatible with Shadowsocks in encryption-related areas, default: false'
             --shadow                 'whether to run shadow server or local server, default: false'
         ")
         .after_help("Homepage: <https://github.com/ditsing/shadowrocks>");
@@ -116,7 +114,8 @@ async fn main() -> Result<()> {
         .map(|s| Duration::from_secs(s))
         .expect("Timeout must be a valid integer.");
     let fast_open = matches.is_present("fast_open");
-    let compatible_mode = matches.is_present("compatible_mode");
+    let compatible_mode = matches.is_present("compatible-mode");
+    dbg!(compatible_mode);
     let global_config = GlobalConfig {
         master_key: if compatible_mode {
             derive_master_key_compatible(

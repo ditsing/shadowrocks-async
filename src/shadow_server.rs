@@ -41,6 +41,7 @@ impl ShadowServer {
             stream,
             global_config.master_key.as_slice(),
             global_config.cipher_type,
+            global_config.compatible_mode,
         )
         .await?;
 
