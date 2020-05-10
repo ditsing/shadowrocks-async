@@ -38,12 +38,16 @@ All of them are AEAD ciphers.
 
 Features
 ---------------
-- [x] TCP tunneling.
-- [ ] Document the code in `src/crypto` in detail.
-- [ ] UDP tunneling with optional fake-tcp.
-- [ ] Replay attack mitigation.
-- [ ] Native obfuscation.
-- [ ] Come up with more features to implement.
+- [x] TCP tunneling
+- [ ] Integrate Clippy
+- [ ] Benchmarks
+- [ ] Integration testing
+- [ ] Crate level documentation
+- [ ] Document the code in `src/crypto` in detail
+- [ ] UDP tunneling with optional fake-tcp
+- [ ] Replay attack mitigation
+- [ ] Native obfuscation
+- [ ] Come up with more features to implement
 
 [1]: https://github.com/shadowsocks/shadowsocks "shadowsocks"
 [1]: https://github.com/shadowsocks/shadowsocks-rust "shadowsocks-rust"
