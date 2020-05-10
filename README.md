@@ -36,6 +36,27 @@ Four types of ciphers are supported:
 
 All of them are AEAD ciphers.
 
+Compatibility
+-------------
+In non-compatible mode, a few changes are made to the traffic between the socks
+server and shadow server.
+
+1. Master key is derived using [`PBKDF2`][4], as opposite to [`PBKDF1`][5] used in
+the original version. Master key is still derived from the password.
+2. Sub-keys are derived using [`HKDF`][6] with `SHA256`, instead of `SHA1`, which is
+no longer considered secure. The input key to `HKDF` is still the master key.
+3. During encryption handshake, the salt used by the socks server to encrypt
+outgoing traffic is designated by the shadow server, while the salt used by the
+shadow server is designated by the socks server. The is the opposite to the
+original version, where each server decides their own salt.
+
+Item #3 helps defined against replay attacks. If we can reasonably assume that
+salt generated is different each time, then both servers have to re-encrypt
+traffic for every new connection. Attackers will need to derive a different
+sub-key for the replied session, which cannot be done without the master key.
+
+In compatible mode, `shadowrocks` behaves the same as the original version.
+
 Features
 ---------------
 - [x] TCP tunneling
@@ -45,11 +66,14 @@ Features
 - [ ] Crate level documentation
 - [ ] Document the code in `src/crypto` in detail
 - [ ] UDP tunneling with optional fake-tcp
-- [ ] Replay attack mitigation
+- [ ] Replay attack mitigation in compatible mode
+- [x] Replay attack mitigation in non-compatible mode
 - [ ] Native obfuscation
 - [ ] Come up with more features to implement
 
 [1]: https://github.com/shadowsocks/shadowsocks "shadowsocks"
-[1]: https://github.com/shadowsocks/shadowsocks-rust "shadowsocks-rust"
-[2]: https://github.com/shadowsocks/shadowsocks-org/issues/27 "SIP002"
-
+[2]: https://github.com/shadowsocks/shadowsocks-rust "shadowsocks-rust"
+[3]: https://github.com/shadowsocks/shadowsocks-org/issues/27 "SIP002"
+[4]: https://tools.ietf.org/html/rfc2898#section-5.2
+[5]: https://tools.ietf.org/html/rfc2898#section-5.1
+[6]: https://tools.ietf.org/html/rfc5869
