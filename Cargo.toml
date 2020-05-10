@@ -9,15 +9,13 @@ readme = "README.md"
 homepage = "https://github.com/ditsing/shadowrocks-async"
 repository = "https://github.com/ditsing/shadowrocks-async"
 license = "MIT"
-license-file = "MIT-LICENSE"
 keywords = ["shadowsocks"]
 categories = [""]
 
 [features]
 default = ["ring-hkdf"]
-ring-hkdf = ["boringssl"]
-ring-digest-in-hkdf = ["boringssl"]
-boringssl = []
+ring-hkdf = []
+ring-digest-in-hkdf = []
 
 [dependencies]
 async-trait = "0.1"
