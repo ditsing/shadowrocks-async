@@ -13,6 +13,11 @@ license-file = "MIT-LICENSE"
 keywords = ["shadowsocks"]
 categories = [""]
 
+[features]
+default = ["ring-hkdf"]
+ring-hkdf = ["boringssl"]
+boringssl = []
+
 [dependencies]
 async-trait = "0.1"
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }

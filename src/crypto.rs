@@ -8,6 +8,7 @@ use cipher_spec::AES_256_GCM;
 
 mod cipher_spec;
 mod hkdf;
+mod key_type;
 mod openssl_crypter;
 mod sodium_crypter;
 
@@ -133,6 +134,30 @@ pub fn derive_master_key_compatible(
 
 const SHADOW_INFO: &'static [u8] = b"ss-subkey";
 
+#[cfg(feature = "ring-hkdf")]
+fn derive_subkey_with_algorithm(
+    master_key: &[u8],
+    salt: &[u8],
+    key_size: usize,
+    use_sha1: bool,
+) -> Vec<u8> {
+    let algorithm = if use_sha1 {
+        ring::hkdf::HKDF_SHA1_FOR_LEGACY_USE_ONLY
+    } else {
+        ring::hkdf::HKDF_SHA256
+    };
+    let salt = ring::hkdf::Salt::new(algorithm, salt);
+    let prk = salt.extract(master_key);
+    let info = &[SHADOW_INFO];
+    let okm = prk
+        .expand(info, key_type::KeyType(key_size))
+        .expect("Should not expand key to too long");
+    let mut ret = vec![0u8; key_size];
+    okm.fill(&mut ret).expect("Should not fill key to too long");
+    ret
+}
+
+#[cfg(not(feature = "ring-hkdf"))]
 fn derive_subkey_with_algorithm(
     master_key: &[u8],
     salt: &[u8],

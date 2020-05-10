@@ -1,3 +1,4 @@
+#![cfg(not(feature = "ring-hkdf"))]
 // HKDF implementation as instructed by https://en.wikipedia.org/wiki/HKDF and RFC5869.
 
 pub trait Hash {
