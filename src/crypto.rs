@@ -88,7 +88,7 @@ pub fn derive_master_key_pbkdf2(
 ) -> Vec<u8> {
     let mut buf = vec![0u8; key_size];
     ring::pbkdf2::derive(
-        ring::pbkdf2::PBKDF2_HMAC_SHA1,
+        ring::pbkdf2::PBKDF2_HMAC_SHA256,
         std::num::NonZeroU32::new(RECOMMENDED_ITERATION_COUNT)
             .expect("Count should be greater than zero"),
         salt,
