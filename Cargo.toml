@@ -16,6 +16,7 @@ categories = [""]
 [features]
 default = ["ring-hkdf"]
 ring-hkdf = ["boringssl"]
+ring-digest-in-hkdf = ["boringssl"]
 boringssl = []
 
 [dependencies]

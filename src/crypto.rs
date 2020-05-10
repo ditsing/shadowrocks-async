@@ -164,6 +164,13 @@ fn derive_subkey_with_algorithm(
     key_size: usize,
     use_sha1: bool,
 ) -> Vec<u8> {
+    #[cfg(feature = "ring-digest-in-hkdf")]
+    let algorithm = if use_sha1 {
+        hkdf::SHA1_FOR_COMPATIBILITY
+    } else {
+        hkdf::SHA256
+    };
+    #[cfg(not(feature = "ring-digest-in-hkdf"))]
     let algorithm = if use_sha1 {
         hkdf::OpensslSha::sha1()
     } else {
