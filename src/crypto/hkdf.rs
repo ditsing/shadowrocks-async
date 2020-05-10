@@ -1,4 +1,4 @@
-#![cfg(not(feature = "ring-hkdf"))]
+#![cfg(not(feature = "ring-crypto"))]
 // HKDF implementation as instructed by https://en.wikipedia.org/wiki/HKDF and RFC5869.
 
 pub trait Hash {
@@ -60,9 +60,11 @@ impl<T: Hash + Sized> Hkdf<T> {
     }
 }
 
+#[cfg(any(feature = "ring-digest-in-hkdf", test))]
 #[derive(Copy, Clone)]
 pub struct RingSha(pub ring::hmac::Algorithm);
 
+#[cfg(any(feature = "ring-digest-in-hkdf", test))]
 impl Hash for RingSha {
     fn digest_length(&self) -> usize {
         self.0.digest_algorithm().output_len
@@ -76,6 +78,7 @@ impl Hash for RingSha {
 
 pub struct OpensslSha(pub openssl::hash::MessageDigest);
 
+#[cfg(any(not(feature = "ring-digest-in-hkdf"), test))]
 impl OpensslSha {
     pub fn sha1() -> Self {
         OpensslSha(openssl::hash::MessageDigest::sha1())
@@ -103,10 +106,10 @@ impl Hash for OpensslSha {
     }
 }
 
-#[allow(dead_code)]
+#[cfg(any(feature = "ring-digest-in-hkdf", test))]
 pub static SHA1_FOR_COMPATIBILITY: RingSha =
     RingSha(ring::hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY);
-#[allow(dead_code)]
+#[cfg(any(feature = "ring-digest-in-hkdf", test))]
 pub static SHA256: RingSha = RingSha(ring::hmac::HMAC_SHA256);
 
 #[cfg(test)]

@@ -13,17 +13,20 @@ keywords = ["shadowsocks"]
 categories = [""]
 
 [features]
-default = ["ring-hkdf"]
-ring-hkdf = []
-ring-digest-in-hkdf = []
+default = ["ring-crypto"]
+ring-crypto = ["ring"]
+ring-digest-in-hkdf = ["ring"]
 
 [dependencies]
 async-trait = "0.1"
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
 stderrlog = "0.4"
 clap = "~2.33.0"
-ring = "~0.16.7"
+ring = { version = "~0.16.7", optional = true }
 openssl = "~0.10.24"
 rand = "0.3"
 sodiumoxide = "0.2"
 tokio = { version = "0.2", features = ["dns", "io-util", "macros", "rt-core", "stream", "tcp"] }
+
+[dev-dependencies]
+ring = "~0.16.7"

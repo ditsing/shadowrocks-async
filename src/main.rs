@@ -3,6 +3,7 @@ extern crate clap;
 extern crate log;
 extern crate openssl;
 extern crate rand;
+#[cfg(feature = "ring")]
 extern crate ring;
 extern crate sodiumoxide;
 extern crate stderrlog;
@@ -127,7 +128,7 @@ async fn main() -> Result<()> {
                 password.as_bytes(),
                 &[],
                 cipher_type.spec().key_size,
-            )
+            )?
         },
         cipher_type,
         timeout,

@@ -81,11 +81,12 @@ pub fn create_crypter(
 // OpenSSL and BoringSSL.
 const RECOMMENDED_ITERATION_COUNT: u32 = 1000; // Iteration count recommended by RFC2898.
 
+#[cfg(feature = "ring-crypto")]
 pub fn derive_master_key_pbkdf2(
     password: &[u8],
     salt: &[u8],
     key_size: usize,
-) -> Vec<u8> {
+) -> Result<Vec<u8>> {
     let mut buf = vec![0u8; key_size];
     ring::pbkdf2::derive(
         ring::pbkdf2::PBKDF2_HMAC_SHA256,
@@ -95,7 +96,30 @@ pub fn derive_master_key_pbkdf2(
         password,
         buf.as_mut_slice(),
     );
-    buf
+    Ok(buf)
+}
+
+#[cfg(not(feature = "ring-crypto"))]
+pub fn derive_master_key_pbkdf2(
+    password: &[u8],
+    salt: &[u8],
+    key_size: usize,
+) -> Result<Vec<u8>> {
+    let mut buf = vec![0u8; key_size];
+    let derive_result = openssl::pkcs5::pbkdf2_hmac(
+        password,
+        salt,
+        RECOMMENDED_ITERATION_COUNT as usize,
+        openssl::hash::MessageDigest::sha256(),
+        buf.as_mut_slice(),
+    );
+    match derive_result {
+        Ok(_) => Ok(buf),
+        Err(e) => {
+            log::error!("Error deriving key {}", e);
+            Err(Error::KeyDerivationError)
+        }
+    }
 }
 
 // The key derivation method used by the original Shadowsocks Python version.
@@ -134,7 +158,7 @@ pub fn derive_master_key_compatible(
 
 const SHADOW_INFO: &'static [u8] = b"ss-subkey";
 
-#[cfg(feature = "ring-hkdf")]
+#[cfg(feature = "ring-crypto")]
 fn derive_subkey_with_algorithm(
     master_key: &[u8],
     salt: &[u8],
@@ -157,7 +181,7 @@ fn derive_subkey_with_algorithm(
     ret
 }
 
-#[cfg(not(feature = "ring-hkdf"))]
+#[cfg(not(feature = "ring-crypto"))]
 fn derive_subkey_with_algorithm(
     master_key: &[u8],
     salt: &[u8],
