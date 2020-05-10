@@ -71,9 +71,35 @@ Features
 - [ ] Native obfuscation
 - [ ] Come up with more features to implement
 
+Crypto dependencies
+-------------------
+Both the [`ring` crate][7] (BoringSSL) and the [`openssl` crate][8] are used.
+The functionality largely overlaps between those two. `ring` was originally
+used as a reference point and sanity check to `openssl`, when the author is
+unfamiliar with the crypto used in `shadowsocks`.
+
+### `ring` and `openssl` feature table
+| features    | `ring` | `openssl` |
+|:------------|:------:|:---------:|
+|  `PBKDF1`   |        |     ✅   |
+|  `PBKDF2`   |   ✅   |     ✅   |
+|`HKDF-SHA1`  |   ✅   |     ✅   |
+|`HKDF-SHA256`|   ✅   |     ✅   |
+|`AES-128-GCM`|   ✅   |     ✅   |
+|`AES-192-GCM`|        |     ✅   |
+|`AES-256-GCM`|   ✅   |     ✅   |
+
+`HKDF-SHA1` support was [recently][9] added to `ring`.
+
+The `ring` crate can be disabled by disabling feature `ring-crypto`. The
+`openssl` crate cannot be completely disabled at the moment.
+
 [1]: https://github.com/shadowsocks/shadowsocks "shadowsocks"
 [2]: https://github.com/shadowsocks/shadowsocks-rust "shadowsocks-rust"
 [3]: https://github.com/shadowsocks/shadowsocks-org/issues/27 "SIP002"
-[4]: https://tools.ietf.org/html/rfc2898#section-5.2
-[5]: https://tools.ietf.org/html/rfc2898#section-5.1
-[6]: https://tools.ietf.org/html/rfc5869
+[4]: https://tools.ietf.org/html/rfc2898#section-5.2 "RFC 2898"
+[5]: https://tools.ietf.org/html/rfc2898#section-5.1 "RFC 2898"
+[6]: https://tools.ietf.org/html/rfc5869 "RFC 5869"
+[7]: https://briansmith.org/rustdoc/ring/index.html "ring"
+[8]: https://github.com/sfackler/rust-openssl "openssl"
+[9]: https://github.com/briansmith/ring/commit/f81232fe69f21ba0c490507e579e15be2333f0d7
