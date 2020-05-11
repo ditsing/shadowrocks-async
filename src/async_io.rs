@@ -47,14 +47,9 @@ impl<T: AsyncWriteExt + std::marker::Send + std::marker::Unpin + ?Sized>
 }
 
 pub trait SplitIntoAsync {
-    type R: AsyncReadTrait
-        + std::marker::Send
-        + std::marker::Unpin
-        + std::marker::Sized;
-    type W: AsyncWriteTrait
-        + std::marker::Send
-        + std::marker::Unpin
-        + std::marker::Sized;
+    // Those two types must be sized, as we would like to allocate them on stack.
+    type R: AsyncReadTrait + std::marker::Send + std::marker::Unpin;
+    type W: AsyncWriteTrait + std::marker::Send + std::marker::Unpin;
 
     fn into_split(self) -> (Self::R, Self::W);
 }

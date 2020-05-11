@@ -6,15 +6,13 @@ pub trait Hash {
     fn digest(&self, key: &[u8], msg: &[u8]) -> Vec<u8>;
 }
 
-pub struct Hkdf<T>
-where
-    T: Hash + Sized,
-{
+pub struct Hkdf<T: Hash> {
     prk: Vec<u8>,
     hash: T,
 }
 
-impl<T: Hash + Sized> Hkdf<T> {
+// Type T must be Sized, as we would like to return Self.
+impl<T: Hash> Hkdf<T> {
     pub fn extract(
         salt_option: Option<&[u8]>,
         input_key_material: &[u8],
