@@ -12,7 +12,7 @@ pub enum CipherType {
 }
 
 impl CipherType {
-    pub fn spec(&self) -> &'static CipherSpec {
+    pub fn spec(self) -> &'static CipherSpec {
         let ret = match self {
             CipherType::Chacha20IetfPoly1305 => &CHACHA20_IETF_POLY1305,
             CipherType::Aes256GCM => &AES_256_GCM,
@@ -21,7 +21,7 @@ impl CipherType {
             #[cfg(test)]
             CipherType::None => &NONE,
         };
-        assert_eq!(&ret.cipher_type, self);
+        assert_eq!(ret.cipher_type, self);
         ret
     }
 }

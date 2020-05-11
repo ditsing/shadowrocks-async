@@ -112,7 +112,7 @@ async fn main() -> Result<()> {
         .value_of("t")
         .unwrap_or("300")
         .parse()
-        .map(|s| Duration::from_secs(s))
+        .map(Duration::from_secs)
         .expect("Timeout must be a valid integer.");
     let fast_open = matches.is_present("fast_open");
     let compatible_mode = matches.is_present("compatible-mode");

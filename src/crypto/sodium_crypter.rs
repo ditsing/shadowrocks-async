@@ -22,7 +22,7 @@ impl Chacha20IetfPoly1305Crypter {
             key: chacha20poly1305_ietf::Key::from_slice(key_bytes)
                 .expect("Error creating crypter"),
             nonce: chacha20poly1305_ietf::Nonce::from_slice(
-                &vec![0u8; Self::NONCE_BYTES],
+                &[0u8; Self::NONCE_BYTES],
             )
             .expect("Error creating nonce"),
             nonce_type,
@@ -34,9 +34,8 @@ impl Crypter for Chacha20IetfPoly1305Crypter {
     fn encrypt(&mut self, data: &[u8]) -> Result<Vec<u8>> {
         let ret =
             chacha20poly1305_ietf::seal(&data, None, &self.nonce, &self.key);
-        match self.nonce_type {
-            NonceType::Sequential => self.nonce.increment_le_inplace(),
-            _ => (),
+        if let NonceType::Sequential = self.nonce_type {
+            self.nonce.increment_le_inplace()
         }
         Ok(ret)
     }
@@ -44,9 +43,8 @@ impl Crypter for Chacha20IetfPoly1305Crypter {
     fn decrypt(&mut self, data: &[u8]) -> Result<Vec<u8>> {
         let ret =
             chacha20poly1305_ietf::open(&data, None, &self.nonce, &self.key);
-        match self.nonce_type {
-            NonceType::Sequential => self.nonce.increment_le_inplace(),
-            _ => (),
+        if let NonceType::Sequential = self.nonce_type {
+            self.nonce.increment_le_inplace()
         }
         ret.map_err(|_e| Error::DecryptionError)
     }

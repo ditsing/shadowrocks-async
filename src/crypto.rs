@@ -156,7 +156,7 @@ pub fn derive_master_key_compatible(
     }
 }
 
-const SHADOW_INFO: &'static [u8] = b"ss-subkey";
+const SHADOW_INFO: &[u8] = b"ss-subkey";
 
 #[cfg(feature = "ring-crypto")]
 fn derive_subkey_with_algorithm(

@@ -146,7 +146,7 @@ impl Socks5Addr {
         };
         info!("Socket address processed.");
         debug!("Address is {:?}", socks5_addr);
-        return Ok(socks5_addr);
+        Ok(socks5_addr)
     }
 
     async fn read_port(

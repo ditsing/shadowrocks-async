@@ -78,9 +78,8 @@ impl OpensslCrypter {
     }
 
     fn increment_nonce(&mut self) {
-        match self.nonce_type {
-            NonceType::Sequential => self.nonce = self.nonce + 1,
-            _ => (),
+        if let NonceType::Sequential = self.nonce_type {
+            self.nonce += 1
         }
     }
 
@@ -92,13 +91,13 @@ impl OpensslCrypter {
 
         ret[0] = (n & ((1 << 8) - 1)) as u8;
 
-        n = n >> 8;
+        n >>= 8;
         ret[1] = (n & ((1 << 8) - 1)) as u8;
 
-        n = n >> 8;
+        n >>= 8;
         ret[2] = (n & ((1 << 8) - 1)) as u8;
 
-        n = n >> 8;
+        n >>= 8;
         ret[3] = (n & ((1 << 8) - 1)) as u8;
 
         ret
@@ -120,9 +119,7 @@ impl Crypter for OpensslCrypter {
 
         let tag_start = ciphertext.len() - TAG_BYTES;
         let mut tag = [0u8; TAG_BYTES];
-        for i in 0..TAG_BYTES {
-            tag[i] = ciphertext[tag_start + i];
-        }
+        tag.clone_from_slice(&ciphertext[tag_start..tag_start + TAG_BYTES]);
         self.decrypt(&ciphertext[..tag_start], &tag)
     }
 

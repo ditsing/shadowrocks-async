@@ -349,7 +349,7 @@ impl SocksServer {
         while let Some(stream) = self.tcp_listener.next().await {
             match stream {
                 Ok(stream) => {
-                    let remote_addr = self.remote_addr.clone();
+                    let remote_addr = self.remote_addr;
                     let global_config = base_global_config.clone();
                     tokio::spawn(async move {
                         info!("New connection");
