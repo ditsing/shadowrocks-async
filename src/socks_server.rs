@@ -150,19 +150,22 @@ impl SocksServer {
         // Extract CMD.
         let cmd_byte = buf[1];
         let cmd = match cmd_byte {
-            0x01 => Command::Connect,
-            0x02 => Command::Bind,
-            0x03 => Command::UdpAssociate,
+            0x01 => Some(Command::Connect),
+            0x02 => Some(Command::Bind),
+            0x03 => Some(Command::UdpAssociate),
             _ => {
                 error!("Unrecognized socks command {}", cmd_byte);
-                return Ok(None);
+                None
             }
         };
-        debug_assert_eq!(cmd_byte, cmd as u8);
+
+        if cmd.is_some() {
+            debug_assert_eq!(cmd_byte, cmd.expect("cmd should be some") as u8);
+        }
 
         Self::check_rsv(buf[2])?;
 
-        Ok(Some(cmd))
+        Ok(cmd)
     }
 
     async fn serve_socks5_stream(
@@ -492,6 +495,19 @@ mod test {
     #[tokio::test]
     async fn test_socks5_command_rsv_async() -> Result<()> {
         let mut ready_buf = ReadyBuf::make(&[&[0x05, 0x03, 0x01]]);
+        let result =
+            SocksServer::read_and_parse_command_request(&mut ready_buf).await;
+        if let Err(Error::UnexpectedReservedBit(v)) = result {
+            assert_eq!(v, 0x01);
+        } else {
+            panic!("Should return error UnexpectedReservedBit = 0x01");
+        }
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_socks5_command_rsv_and_none_async() -> Result<()> {
+        let mut ready_buf = ReadyBuf::make(&[&[0x05, 0x04, 0x01]]);
         let result =
             SocksServer::read_and_parse_command_request(&mut ready_buf).await;
         if let Err(Error::UnexpectedReservedBit(v)) = result {
