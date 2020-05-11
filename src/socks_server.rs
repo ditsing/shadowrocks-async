@@ -183,6 +183,12 @@ impl SocksServer {
             .write_all(&[Self::SOCKET_VERSION, method as u8])
             .await?;
 
+        if method == Method::NoAcceptableMethods {
+            info!("No auth methods available, shutting down connection.");
+            stream.shutdown(Shutdown::Both)?;
+            return Ok(());
+        }
+
         // Expecting a request with command.
         let cmd_option =
             Self::read_and_parse_command_request(&mut stream).await?;
@@ -506,6 +512,12 @@ mod test {
         let mut buf = [0u8; 2];
         stream.read_exact(&mut buf)?;
         assert_eq!(buf, [0x05, 0xFF]); // Socks version 5, no acceptable methods.
+
+        if let Err(e) = stream.read_exact(&mut buf) {
+            assert_eq!(e.kind(), ErrorKind::UnexpectedEof);
+        } else {
+            panic!("The connection should have shutdown.");
+        }
 
         Ok(())
     }
