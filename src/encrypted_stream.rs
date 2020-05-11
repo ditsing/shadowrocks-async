@@ -1,3 +1,4 @@
+use std::borrow::BorrowMut;
 use std::convert::TryInto;
 
 use async_trait::async_trait;
@@ -37,7 +38,7 @@ async fn read_and_derive_crypter(
 
 async fn read_encrypt(
     stream: &mut (impl AsyncReadTrait + std::marker::Unpin),
-    crypter: &mut Box<dyn Crypter>,
+    crypter: &'_ mut (dyn Crypter + 'static),
 ) -> Result<Vec<u8>> {
     let mut buf = vec![0u8; crypter.expected_ciphertext_length(LENGTH_SIZE)];
     stream.read_exact(buf.as_mut_slice()).await?;
@@ -79,7 +80,7 @@ async fn build_and_write_crypter(
 
 async fn write_encrypt(
     stream: &mut (impl AsyncWriteTrait + std::marker::Unpin),
-    crypter: &mut Box<dyn Crypter>,
+    crypter: &'_ mut (dyn Crypter + 'static),
     data: &[u8],
 ) -> Result<()> {
     let length = (data.len() as u16).to_be_bytes();
@@ -179,7 +180,7 @@ impl EncryptedStream {
 impl AsyncReadTrait for EncryptedReadStream {
     async fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         if self.buf.len() == self.ptr {
-            self.buf = read_encrypt(&mut self.stream, &mut self.decrypter)
+            self.buf = read_encrypt(&mut self.stream, self.decrypter.borrow_mut())
                 .await
                 .map_err(convert_to_io_error)?;
             self.ptr = 0;
@@ -217,14 +218,14 @@ impl AsyncReadTrait for EncryptedStream {
 #[async_trait]
 impl AsyncWriteTrait for EncryptedWriteStream {
     async fn write(&mut self, data: &[u8]) -> std::io::Result<usize> {
-        write_encrypt(&mut self.stream, &mut self.encrypter, data)
+        write_encrypt(&mut self.stream, self.encrypter.borrow_mut(), data)
             .await
             .map(|_| data.len())
             .map_err(convert_to_io_error)
     }
 
     async fn write_all(&mut self, data: &[u8]) -> std::io::Result<()> {
-        write_encrypt(&mut self.stream, &mut self.encrypter, data)
+        write_encrypt(&mut self.stream, self.encrypter.borrow_mut(), data)
             .await
             .map_err(convert_to_io_error)
     }
@@ -319,7 +320,7 @@ mod test {
         ];
 
         let decrypted_text =
-            read_encrypt(&mut data.as_ref(), &mut crypter).await?;
+            read_encrypt(&mut data.as_ref(), crypter.borrow_mut()).await?;
 
         let plaintext = [0x2; 37];
         assert_eq!(decrypted_text, plaintext.to_vec());
@@ -368,7 +369,7 @@ mod test {
             create_crypter(&key, NonceType::Sequential, CipherType::Aes256GCM);
 
         let mut ready_buf = ReadyBuf::make(&[]);
-        write_encrypt(&mut ready_buf, &mut crypter, &[0x02; 37]).await?;
+        write_encrypt(&mut ready_buf, crypter.borrow_mut(), &[0x02; 37]).await?;
         assert_eq!(
             ready_buf.combined(),
             crypto_vec![
