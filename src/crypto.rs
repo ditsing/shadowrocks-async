@@ -79,7 +79,7 @@ pub fn create_crypter(
 // original Shadowsocks Python version.
 // PBKDF2 is defined in RFC2898, as a supersede version of PBKDF1 implemented by EVP_BytesToKey() in
 // OpenSSL and BoringSSL.
-const RECOMMENDED_ITERATION_COUNT: u32 = 1000; // Iteration count recommended by RFC2898.
+const RECOMMENDED_ITERATION_COUNT: u32 = 10000; // Iteration count recommended by RFC2898.
 
 #[cfg(feature = "ring-crypto")]
 pub fn derive_master_key_pbkdf2(
