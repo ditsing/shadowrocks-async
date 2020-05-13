@@ -20,6 +20,8 @@ pub trait AsyncWriteTrait {
     async fn write_all(&mut self, data: &[u8]) -> std::io::Result<()>;
 }
 
+// `T: AsyncWriteExt + Unpin` guarantees that T has write() and write_all().
+// `T: Send` guarantees that `self` can be used before and after an `.await`.
 #[async_trait]
 impl<T: AsyncReadExt + Send + Unpin + ?Sized> AsyncReadTrait for T {
     async fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
@@ -31,6 +33,8 @@ impl<T: AsyncReadExt + Send + Unpin + ?Sized> AsyncReadTrait for T {
     }
 }
 
+// `T: AsyncWriteExt + Unpin` guarantees that T has write() and write_all().
+// `T: Send` guarantees that `self` can be the parameter of an async function.
 #[async_trait]
 impl<T: AsyncWriteExt + Send + Unpin + ?Sized> AsyncWriteTrait for T {
     async fn write(&mut self, data: &[u8]) -> std::io::Result<usize> {
@@ -44,6 +48,8 @@ impl<T: AsyncWriteExt + Send + Unpin + ?Sized> AsyncWriteTrait for T {
 
 pub trait SplitIntoAsync {
     // Those two types must be sized, as we would like to allocate them on stack.
+    // They also must implement `Send` because the results will be used in
+    // async functions.
     type R: AsyncReadTrait + Send;
     type W: AsyncWriteTrait + Send;
 
@@ -81,6 +87,10 @@ pub async fn copy(
 // Start a new task that proxies data between local and remote streams.
 // This is not an `async` function. It should not block, either, assuming tokio::spawn() is fast.
 pub fn proxy(
+    // `local` and `remote` must implement `Send` because they'll be moved into
+    // an async function, which might execute on a different thread.
+    // They should not contain non-`'static` references, since the async
+    // function can run arbitrarily long.
     local: impl SplitIntoAsync + Send + 'static,
     remote: impl SplitIntoAsync + Send + 'static,
     name: Socks5Addr,
