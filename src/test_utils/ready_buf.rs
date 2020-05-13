@@ -81,4 +81,4 @@ impl ReadyBuf {
     }
 }
 
-impl std::marker::Unpin for ReadyBuf {}
+impl Unpin for ReadyBuf {}

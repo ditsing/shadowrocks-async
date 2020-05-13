@@ -21,9 +21,7 @@ pub trait AsyncWriteTrait {
 }
 
 #[async_trait]
-impl<T: AsyncReadExt + std::marker::Send + std::marker::Unpin + ?Sized>
-    AsyncReadTrait for T
-{
+impl<T: AsyncReadExt + Send + Unpin + ?Sized> AsyncReadTrait for T {
     async fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         <T as AsyncReadExt>::read(self, buf).await
     }
@@ -34,9 +32,7 @@ impl<T: AsyncReadExt + std::marker::Send + std::marker::Unpin + ?Sized>
 }
 
 #[async_trait]
-impl<T: AsyncWriteExt + std::marker::Send + std::marker::Unpin + ?Sized>
-    AsyncWriteTrait for T
-{
+impl<T: AsyncWriteExt + Send + Unpin + ?Sized> AsyncWriteTrait for T {
     async fn write(&mut self, data: &[u8]) -> std::io::Result<usize> {
         <T as AsyncWriteExt>::write(self, data).await
     }
@@ -48,8 +44,8 @@ impl<T: AsyncWriteExt + std::marker::Send + std::marker::Unpin + ?Sized>
 
 pub trait SplitIntoAsync {
     // Those two types must be sized, as we would like to allocate them on stack.
-    type R: AsyncReadTrait + std::marker::Send;
-    type W: AsyncWriteTrait + std::marker::Send;
+    type R: AsyncReadTrait + Send;
+    type W: AsyncWriteTrait + Send;
 
     fn into_split(self) -> (Self::R, Self::W);
 }
@@ -85,8 +81,8 @@ pub async fn copy(
 // Start a new task that proxies data between local and remote streams.
 // This is not an `async` function. It should not block, either, assuming tokio::spawn() is fast.
 pub fn proxy(
-    local: impl SplitIntoAsync + std::marker::Send + 'static,
-    remote: impl SplitIntoAsync + std::marker::Send + 'static,
+    local: impl SplitIntoAsync + Send + 'static,
+    remote: impl SplitIntoAsync + Send + 'static,
     name: Socks5Addr,
 ) {
     tokio::spawn(async move {

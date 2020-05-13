@@ -17,7 +17,7 @@ use crate::Result;
 const LENGTH_SIZE: usize = 2;
 
 async fn read_and_derive_crypter(
-    stream: &mut (impl AsyncReadTrait + std::marker::Unpin),
+    stream: &mut (impl AsyncReadTrait + Unpin),
     master_key: &[u8],
     cipher_type: CipherType,
     compatible_mode: bool,
@@ -37,7 +37,7 @@ async fn read_and_derive_crypter(
 }
 
 async fn read_encrypt(
-    stream: &mut (impl AsyncReadTrait + std::marker::Unpin),
+    stream: &mut (impl AsyncReadTrait + Unpin),
     crypter: &'_ mut (dyn Crypter + 'static),
 ) -> Result<Vec<u8>> {
     let mut buf = vec![0u8; crypter.expected_ciphertext_length(LENGTH_SIZE)];
@@ -58,7 +58,7 @@ async fn read_encrypt(
 }
 
 async fn build_and_write_crypter(
-    stream: &mut (impl AsyncWriteTrait + std::marker::Unpin),
+    stream: &mut (impl AsyncWriteTrait + Unpin),
     master_key: &[u8],
     cipher_type: CipherType,
     compatible_mode: bool,
@@ -79,7 +79,7 @@ async fn build_and_write_crypter(
 }
 
 async fn write_encrypt(
-    stream: &mut (impl AsyncWriteTrait + std::marker::Unpin),
+    stream: &mut (impl AsyncWriteTrait + Unpin),
     crypter: &'_ mut (dyn Crypter + 'static),
     data: &[u8],
 ) -> Result<()> {

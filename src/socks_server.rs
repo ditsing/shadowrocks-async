@@ -112,7 +112,7 @@ impl SocksServer {
     }
 
     async fn read_and_parse_first_request(
-        stream: &mut (impl AsyncReadTrait + std::marker::Unpin),
+        stream: &mut (impl AsyncReadTrait + Unpin),
     ) -> Result<Vec<Method>> {
         info!("SOCKS5 handshaking ...");
         // The first two bytes contains version and number of methods.
@@ -139,7 +139,7 @@ impl SocksServer {
     }
 
     async fn read_and_parse_command_request(
-        stream: &mut (impl AsyncReadTrait + std::marker::Unpin),
+        stream: &mut (impl AsyncReadTrait + Unpin),
     ) -> Result<Option<Command>> {
         info!("Reading command request and rsv ...");
         let mut buf = [0u8; 3];
