@@ -1,9 +1,9 @@
 use std::collections::VecDeque;
-use std::task::Context;
+use std::pin::Pin;
+use std::task::{Context, Poll};
 
 use std::io::Error;
 use tokio::io::{AsyncRead, AsyncWrite};
-use tokio::macros::support::{Pin, Poll};
 
 // A buffer that supports both AsyncRead and AsyncWrite.
 // Could possibly be replaced by bytes::BufMut or tokio_test::io::Mock.
