@@ -116,7 +116,6 @@ async fn main() -> Result<()> {
         .expect("Timeout must be a valid integer.");
     let fast_open = matches.is_present("fast_open");
     let compatible_mode = matches.is_present("compatible-mode");
-    dbg!(compatible_mode);
     let global_config = GlobalConfig {
         master_key: if compatible_mode {
             derive_master_key_compatible(
