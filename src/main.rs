@@ -25,14 +25,13 @@ mod socks_server;
 use std::net::ToSocketAddrs;
 use std::time::Duration;
 
-use error::Error;
+pub use error::Error;
+pub type Result<T> = std::result::Result<T, Error>;
 
 use crate::crypto::{
     derive_master_key_compatible, derive_master_key_pbkdf2, lookup_cipher,
     CipherType,
 };
-
-pub type Result<T> = std::result::Result<T, Error>;
 
 pub struct GlobalConfig {
     master_key: Vec<u8>,
