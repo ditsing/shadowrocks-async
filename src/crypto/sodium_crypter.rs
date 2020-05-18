@@ -1,4 +1,5 @@
 use sodiumoxide::crypto::aead::chacha20poly1305_ietf;
+use sodiumoxide::crypto::aead::xchacha20poly1305_ietf;
 
 use crate::Error;
 use crate::Result;
@@ -6,53 +7,64 @@ use crate::Result;
 use super::Crypter;
 use super::NonceType;
 
-pub struct Chacha20IetfPoly1305Crypter {
-    key: chacha20poly1305_ietf::Key,
-    nonce: chacha20poly1305_ietf::Nonce,
-    nonce_type: NonceType,
+macro_rules! define_sodium_crypter {
+    ($name:ident, $namespace:ident) => {
+        pub struct $name {
+            key: $namespace::Key,
+            nonce: $namespace::Nonce,
+            nonce_type: NonceType,
+        }
+
+        impl $name {
+            pub const KEY_BYTES: usize = $namespace::KEYBYTES;
+            pub const NONCE_BYTES: usize = $namespace::NONCEBYTES;
+            pub const TAG_BYTES: usize = $namespace::TAGBYTES;
+
+            pub fn create_crypter(
+                key_bytes: &[u8],
+                nonce_type: NonceType,
+            ) -> Self {
+                Self {
+                    key: $namespace::Key::from_slice(key_bytes)
+                        .expect("Error creating crypter"),
+                    nonce: $namespace::Nonce::from_slice(
+                        &[0u8; Self::NONCE_BYTES],
+                    )
+                    .expect("Error creating nonce"),
+                    nonce_type,
+                }
+            }
+        }
+
+        impl Crypter for $name {
+            fn encrypt(&mut self, data: &[u8]) -> Result<Vec<u8>> {
+                let ret = $namespace::seal(&data, None, &self.nonce, &self.key);
+                if let NonceType::Sequential = self.nonce_type {
+                    self.nonce.increment_le_inplace()
+                }
+                Ok(ret)
+            }
+
+            fn decrypt(&mut self, data: &[u8]) -> Result<Vec<u8>> {
+                let ret = $namespace::open(&data, None, &self.nonce, &self.key);
+                if let NonceType::Sequential = self.nonce_type {
+                    self.nonce.increment_le_inplace()
+                }
+                ret.map_err(|_e| Error::DecryptionError)
+            }
+
+            fn expected_ciphertext_length(
+                &self,
+                plaintext_length: usize,
+            ) -> usize {
+                plaintext_length + Self::TAG_BYTES
+            }
+        }
+    };
 }
 
-impl Chacha20IetfPoly1305Crypter {
-    pub const KEY_BYTES: usize = chacha20poly1305_ietf::KEYBYTES;
-    pub const NONCE_BYTES: usize = chacha20poly1305_ietf::NONCEBYTES;
-    pub const TAG_BYTES: usize = chacha20poly1305_ietf::TAGBYTES;
-
-    pub fn create_crypter(key_bytes: &[u8], nonce_type: NonceType) -> Self {
-        Self {
-            key: chacha20poly1305_ietf::Key::from_slice(key_bytes)
-                .expect("Error creating crypter"),
-            nonce: chacha20poly1305_ietf::Nonce::from_slice(
-                &[0u8; Self::NONCE_BYTES],
-            )
-            .expect("Error creating nonce"),
-            nonce_type,
-        }
-    }
-}
-
-impl Crypter for Chacha20IetfPoly1305Crypter {
-    fn encrypt(&mut self, data: &[u8]) -> Result<Vec<u8>> {
-        let ret =
-            chacha20poly1305_ietf::seal(&data, None, &self.nonce, &self.key);
-        if let NonceType::Sequential = self.nonce_type {
-            self.nonce.increment_le_inplace()
-        }
-        Ok(ret)
-    }
-
-    fn decrypt(&mut self, data: &[u8]) -> Result<Vec<u8>> {
-        let ret =
-            chacha20poly1305_ietf::open(&data, None, &self.nonce, &self.key);
-        if let NonceType::Sequential = self.nonce_type {
-            self.nonce.increment_le_inplace()
-        }
-        ret.map_err(|_e| Error::DecryptionError)
-    }
-
-    fn expected_ciphertext_length(&self, plaintext_length: usize) -> usize {
-        plaintext_length + Self::TAG_BYTES
-    }
-}
+define_sodium_crypter!(XChacha20IetfPoly1305Crypter, xchacha20poly1305_ietf);
+define_sodium_crypter!(Chacha20IetfPoly1305Crypter, chacha20poly1305_ietf);
 
 #[cfg(test)]
 #[rustfmt::skip::macros(crypto_array, crypto_vec)]
@@ -172,6 +184,15 @@ mod test {
         assert_eq!(
             super::super::TAG_BYTES,
             Chacha20IetfPoly1305Crypter::TAG_BYTES
+        );
+
+        assert_eq!(
+            super::super::LARGE_NONCE_BYTES,
+            XChacha20IetfPoly1305Crypter::NONCE_BYTES
+        );
+        assert_eq!(
+            super::super::TAG_BYTES,
+            XChacha20IetfPoly1305Crypter::TAG_BYTES
         );
     }
 }

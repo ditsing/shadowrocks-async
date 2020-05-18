@@ -4,6 +4,7 @@ use crate::Result;
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum CipherType {
     Chacha20IetfPoly1305,
+    XChacha20IetfPoly1305,
     Aes256GCM,
     Aes192GCM,
     Aes128GCM,
@@ -15,6 +16,7 @@ impl CipherType {
     pub fn spec(self) -> &'static CipherSpec {
         let ret = match self {
             CipherType::Chacha20IetfPoly1305 => &CHACHA20_IETF_POLY1305,
+            CipherType::XChacha20IetfPoly1305 => &XCHACHA20_IETF_POLY1305,
             CipherType::Aes256GCM => &AES_256_GCM,
             CipherType::Aes192GCM => &AES_192_GCM,
             CipherType::Aes128GCM => &AES_128_GCM,
@@ -39,6 +41,14 @@ pub static CHACHA20_IETF_POLY1305: CipherSpec = CipherSpec {
     key_size: 32,
     salt_size: 32,
     nonce_size: 12,
+    tag_size: 16,
+};
+
+pub static XCHACHA20_IETF_POLY1305: CipherSpec = CipherSpec {
+    cipher_type: CipherType::XChacha20IetfPoly1305,
+    key_size: 32,
+    salt_size: 32,
+    nonce_size: 24,
     tag_size: 16,
 };
 
@@ -78,6 +88,7 @@ pub static NONE: CipherSpec = CipherSpec {
 pub fn lookup_cipher(name: &str) -> Result<CipherType> {
     let cipher_type = match name {
         "chacha20-ietf-poly1305" => CipherType::Chacha20IetfPoly1305,
+        "xchacha20-ietf-poly1305" => CipherType::XChacha20IetfPoly1305,
         "aes-256-gcm" => CipherType::Aes256GCM,
         "aes-192-gcm" => CipherType::Aes192GCM,
         "aes-128-gcm" => CipherType::Aes128GCM,

@@ -22,6 +22,8 @@ pub enum NonceType {
 
 const TAG_BYTES: usize = 16;
 const NONCE_BYTES: usize = 12;
+#[allow(dead_code)]
+const LARGE_NONCE_BYTES: usize = 24;
 
 // A wrapper of underlying crypto algorithm that encrypts and decrypts bytes.
 pub trait Crypter: Send {
@@ -48,6 +50,22 @@ pub fn create_crypter(
         assert_eq!(
             spec.nonce_size,
             sodium_crypter::Chacha20IetfPoly1305Crypter::NONCE_BYTES
+        );
+        return Box::new(crypter);
+    } else if cipher_type == CipherType::XChacha20IetfPoly1305 {
+        let crypter =
+            sodium_crypter::XChacha20IetfPoly1305Crypter::create_crypter(
+                key_bytes, nonce_type,
+            );
+
+        let spec = cipher_type.spec();
+        assert_eq!(
+            spec.key_size,
+            sodium_crypter::XChacha20IetfPoly1305Crypter::KEY_BYTES
+        );
+        assert_eq!(
+            spec.nonce_size,
+            sodium_crypter::XChacha20IetfPoly1305Crypter::NONCE_BYTES
         );
         return Box::new(crypter);
     }
@@ -225,6 +243,7 @@ pub fn derive_subkey(
 mod test {
     use crate::crypto::cipher_spec::{
         AES_128_GCM, AES_192_GCM, CHACHA20_IETF_POLY1305,
+        XCHACHA20_IETF_POLY1305,
     };
 
     use super::*;
@@ -378,6 +397,7 @@ mod test {
     #[test]
     fn test_key_size_not_too_long() {
         assert!(AES_256_GCM.key_size >= CHACHA20_IETF_POLY1305.key_size);
+        assert!(AES_256_GCM.key_size >= XCHACHA20_IETF_POLY1305.key_size);
         assert!(AES_256_GCM.key_size >= AES_192_GCM.key_size);
         assert!(AES_256_GCM.key_size >= AES_128_GCM.key_size);
     }
@@ -395,5 +415,12 @@ mod test {
             assert_eq!(spec.nonce_size, NONCE_BYTES);
             assert_eq!(spec.tag_size, TAG_BYTES);
         }
+
+        assert_eq!(
+            XCHACHA20_IETF_POLY1305.key_size,
+            XCHACHA20_IETF_POLY1305.salt_size
+        );
+        assert_eq!(XCHACHA20_IETF_POLY1305.nonce_size, LARGE_NONCE_BYTES);
+        assert_eq!(XCHACHA20_IETF_POLY1305.tag_size, TAG_BYTES);
     }
 }
