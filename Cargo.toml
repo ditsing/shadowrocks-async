@@ -24,7 +24,7 @@ stderrlog = "0.4"
 clap = "~2.33.0"
 ring = { version = "~0.16.7", optional = true }
 openssl = "~0.10.24"
-rand = "0.3"
+rand = "0.7"
 sodiumoxide = "0.2"
 tokio = { version = "0.2", features = ["dns", "io-util", "macros", "rt-core", "stream", "tcp"] }
 

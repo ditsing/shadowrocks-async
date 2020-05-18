@@ -3,7 +3,7 @@ use std::convert::TryInto;
 
 use async_trait::async_trait;
 use log::info;
-use rand::Rng;
+use rand::RngCore;
 use tokio::net::{
     tcp::{OwnedReadHalf, OwnedWriteHalf},
     TcpStream,
@@ -65,7 +65,7 @@ async fn build_and_write_crypter(
 ) -> Result<Box<dyn Crypter>> {
     let cipher_spec = cipher_type.spec();
     let mut salt = vec![0u8; cipher_spec.salt_size];
-    (rand::os::OsRng::new()?).fill_bytes(&mut salt);
+    rand::rngs::OsRng.fill_bytes(&mut salt);
     stream.write_all(&salt).await?;
 
     let subkey = crate::crypto::derive_subkey(
