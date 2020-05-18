@@ -30,6 +30,7 @@ Encryption
 Four types of ciphers are supported:
 
 * `chacha20-ietf-poly1305` provided by sodium
+* `xchacha20-ietf-poly1305` provided by sodium
 * `aes-128-gcm` by OpenSSL
 * `aes-192-gcm` by OpenSSL
 * `aes-256-gcm` by OpenSSL

@@ -70,7 +70,7 @@ async fn main() -> Result<()> {
             -b [LOCAL_ADDR]          'local binding address, default: 127.0.0.1'
             -l [LOCAL_PORT]          'local port, default: 1080'
             -k <PASSWORD>            'password'
-            -m [METHOD]              'encryption method to use, default: aes-256-gcm. Other valid values are: aes-128-gcm, aes-192-gcm, aes-256-gcm, chacha20-ietf-poly1305'
+            -m [METHOD]              'encryption method to use, default: aes-256-gcm. Other valid values are: aes-128-gcm, aes-192-gcm, aes-256-gcm, chacha20-ietf-poly1305, xchacha20-ietf-poly1305'
             -t [TIMEOUT]             'timeout in seconds, default: 300'
 
             --fast-open              'use TCP_FASTOPEN, requires Linux 3.7+, default: false'
