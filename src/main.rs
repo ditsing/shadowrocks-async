@@ -1,46 +1,12 @@
-extern crate async_trait;
-extern crate clap;
-extern crate log;
-extern crate openssl;
-extern crate rand;
-#[cfg(feature = "ring")]
-extern crate ring;
-extern crate sodiumoxide;
-extern crate stderrlog;
-extern crate tokio;
-
-// Don't move! macros defined in test_utils must be included first.
-#[cfg(test)]
-#[macro_use]
-mod test_utils;
-
-mod async_io;
-mod crypto;
-mod encrypted_stream;
-mod error;
-mod shadow_server;
-mod socks5_addr;
-mod socks_server;
+extern crate shadowrocks;
 
 use std::net::ToSocketAddrs;
 use std::time::Duration;
 
-pub use error::Error;
-pub type Result<T> = std::result::Result<T, Error>;
-
-use crate::crypto::{
+use shadowrocks::{
     derive_master_key_compatible, derive_master_key_pbkdf2, lookup_cipher,
-    CipherType,
+    shadow_server, socks_server, GlobalConfig, Result,
 };
-
-pub struct GlobalConfig {
-    master_key: Vec<u8>,
-    cipher_type: CipherType,
-    timeout: Duration,
-    #[allow(dead_code)]
-    fast_open: bool,
-    compatible_mode: bool,
-}
 
 fn choose_log_level() -> log::LevelFilter {
     if cfg!(debug_assertions) {
