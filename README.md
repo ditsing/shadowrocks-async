@@ -95,6 +95,38 @@ unfamiliar with the crypto used in `shadowsocks`.
 The `ring` crate can be disabled by disabling feature `ring-crypto`. The
 `openssl` crate cannot be completely disabled at the moment.
 
+Improvements
+------------
+- [ ] Reduce memory allocation in the encryption / decryption process.
+
+The current implementation does a lot of small memory allocations for each
+connection. For example, to send the SOCKS 5 address from socks server to
+remote shadow server, the following process is followed.
+
+1. Turning SOCKS 5 address into bytes.
+2. Turning packet length into bytes (`x` bytes, `x = 2`).
+3. Turning nonce into bytes (4 bytes).
+4. An OpenSSL crypter object.
+5. Ciphertext of packet length (`x` bytes, `x = 2`).
+6. Tag for the encryption (16 bytes).
+7. Concatenation of ciphertext and tag (18 bytes).
+8. Repeat 2-7 for SOCKS5 address with `x` varies.
+
+To summarize, 13 allocations for each packet. Each encryption costs 6
+allocations, and each packet we have to encrypt twice: once for packet length
+and once for the actual information.
+
+The process for reading is similar.
+1. Ciphertext of packet length.
+2. Tag for encryption
+3. Turning nonce into bytes
+4. An OpenSSL crypter object.
+5. Packet length plaintext.
+6. Repeat 1-5 for packet content.
+
+We saved one step for the "ciphertext without tag" part. Nonetheless this is
+still terrible.
+
 [1]: https://github.com/shadowsocks/shadowsocks "shadowsocks"
 [2]: https://github.com/shadowsocks/shadowsocks-rust "shadowsocks-rust"
 [3]: https://github.com/shadowsocks/shadowsocks-org/issues/27 "SIP002"
