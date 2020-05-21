@@ -51,7 +51,7 @@ outgoing traffic is designated by the shadow server, while the salt used by the
 shadow server is designated by the socks server. The is the opposite to the
 original version, where each server decides their own salt.
 
-Item #3 helps defined against replay attacks. If we can reasonably assume that
+Item #3 helps defend against replay attacks. If we can reasonably assume that
 salt generated is different each time, then both servers have to re-encrypt
 traffic for every new connection. Attackers will need to derive a different
 sub-key for the replied session, which cannot be done without the master key.
