@@ -231,11 +231,12 @@ impl SocksServer {
         match cmd {
             Command::Connect => {
                 // Note the order of operation:
-                // 1. Create a connection to the target IP.
-                // 2. Notify the client that a connection has been created, or return various
+                // 1. Create a connection to the remote address.
+                // 2. Write the target address to remote.
+                // 3. Notify the client that a connection has been created, or return various
                 // errors, e.g. network unreachable, connection not allowed, host not found and
                 // connection refused.
-                // 3. Save the relay in the map.
+                // 4. Create and start the proxy.
                 info!("Connecting to remote ...");
                 let remote_stream =
                     TcpStream::connect(remote_addr).await.map_err(|e| {
@@ -292,7 +293,6 @@ impl SocksServer {
                 )
                 .await?;
 
-                // Encryption not implemented.
                 info!("Setting shadow address on remote ...");
                 remote_encrypted_stream
                     .write_all(&target_addr.bytes())
