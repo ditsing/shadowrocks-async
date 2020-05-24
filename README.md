@@ -75,7 +75,8 @@ Features
 - [ ] Replay attack mitigation in compatible mode
 - [x] Replay attack mitigation in non-compatible mode
 - [ ] Native obfuscation
-- [ ] Come up with more features to implement
+- [ ] [Manager][10] API to create servers on the fly
+- [ ] `ss://` URL and JSON config file
 
 Crypto dependencies
 -------------------
@@ -141,3 +142,4 @@ still terrible.
 [7]: https://briansmith.org/rustdoc/ring/index.html "ring"
 [8]: https://github.com/sfackler/rust-openssl "openssl"
 [9]: https://github.com/briansmith/ring/commit/f81232fe69f21ba0c490507e579e15be2333f0d7
+[10]: https://github.com/shadowsocks/shadowsocks/wiki/Manage-Multiple-Users "Shadowsocks Wiki"
