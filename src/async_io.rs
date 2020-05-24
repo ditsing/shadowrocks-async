@@ -1,4 +1,4 @@
-use log::{info, warn};
+use log::{debug, info, warn};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::net::TcpStream;
@@ -69,18 +69,19 @@ impl SplitIntoAsync for TcpStream {
 pub async fn copy(
     mut reader: impl AsyncReadTrait,
     mut writer: impl AsyncWriteTrait,
+    debug_name: String,
 ) -> Result<()> {
     let mut buf = [0u8; 8192];
     loop {
-        info!("Copy reading bytes ...");
+        debug!("{} reading bytes ...", debug_name);
         let bytes = reader.read(&mut buf).await?;
         if bytes == 0 {
-            info!("Copy got EOF");
+            debug!("{} got EOF", debug_name);
             return Ok(());
         }
-        info!("Copy read {} bytes", bytes);
+        debug!("{} read {} bytes", debug_name, bytes);
         writer.write_all(&buf[..bytes]).await?;
-        info!("Copy wrote {} bytes", bytes);
+        debug!("{} wrote {} bytes", debug_name, bytes);
     }
 }
 
@@ -98,8 +99,13 @@ pub fn proxy(
     tokio::spawn(async move {
         let (local_reader, local_writer) = local.into_split();
         let (remote_reader, remote_writer) = remote.into_split();
-        let upstream = copy(local_reader, remote_writer);
-        let downstream = copy(remote_reader, local_writer);
+        let upstream =
+            copy(local_reader, remote_writer, format!("Uplink to {:?}", name));
+        let downstream = copy(
+            remote_reader,
+            local_writer,
+            format!("Downlink from {:?}", name),
+        );
         let (upstream_result, downstream_result) =
             tokio::join!(upstream, downstream);
         if let Err(e) = upstream_result {
