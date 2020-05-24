@@ -228,9 +228,7 @@ mod test {
 
         let mut buf = [0u8; 1];
         let result = stream.read_exact(&mut buf);
-        if let Err(_) = result {
-            // expected.
-        } else {
+        if result.is_ok() {
             panic!("Server should not send response or accept writes.");
         }
         Ok(())
@@ -244,9 +242,7 @@ mod test {
 
         let mut buf = [0u8; 1];
         let result = stream.read_exact(&mut buf);
-        if let Err(_) = result {
-            // expected.
-        } else {
+        if result.is_ok() {
             panic!("Server should not send response or accept writes.");
         }
         Ok(())

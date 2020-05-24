@@ -16,6 +16,7 @@ pub fn run_local_tcp_server() -> Result<(SocketAddr, Arc<AtomicBool>)> {
     let running_clone = running.clone();
     std::thread::spawn(move || {
         let mut count = 0u16;
+        #[allow(clippy::explicit_counter_loop)]
         for stream in tcp_listener.incoming() {
             count += 1;
             match stream {

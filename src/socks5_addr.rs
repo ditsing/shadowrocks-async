@@ -201,18 +201,11 @@ mod test {
 
     #[tokio::test]
     async fn test_parse_domain_async() -> Result<()> {
-        let mut buf = ReadyBuf::make(&[
-            &[0x03],
-            &[15],
-            "www.ditsing.com".as_bytes(),
-            &[0, 80],
-        ]);
+        let mut buf =
+            ReadyBuf::make(&[&[0x03], &[15], b"www.ditsing.com", &[0, 80]]);
         let addr = Socks5Addr::read_and_parse_address(&mut buf).await?;
 
-        assert_eq!(
-            addr,
-            Socks5Addr::Domain("www.ditsing.com".as_bytes().to_vec(), 80)
-        );
+        assert_eq!(addr, Socks5Addr::Domain(b"www.ditsing.com".to_vec(), 80));
         assert_eq!(
             addr.bytes(),
             &crypto_array![
@@ -227,12 +220,8 @@ mod test {
     #[tokio::test]
     async fn test_parse_ipv6_async() -> Result<()> {
         // It happens to be a correct v6 address as well.
-        let mut buf = ReadyBuf::make(&[
-            &[0x04],
-            &[20],
-            "www.ditsing.com".as_bytes(),
-            &[0, 80],
-        ]);
+        let mut buf =
+            ReadyBuf::make(&[&[0x04], &[20], b"www.ditsing.com", &[0, 80]]);
         let addr = Socks5Addr::read_and_parse_address(&mut buf).await?;
 
         assert_eq!(
@@ -260,12 +249,8 @@ mod test {
 
     #[tokio::test]
     async fn test_parse_unsupported_address_type() -> Result<()> {
-        let mut buf = ReadyBuf::make(&[
-            &[0x02],
-            &[20],
-            "www.ditsing.com".as_bytes(),
-            &[0, 80],
-        ]);
+        let mut buf =
+            ReadyBuf::make(&[&[0x02], &[20], b"www.ditsing.com", &[0, 80]]);
         let result = Socks5Addr::read_and_parse_address(&mut buf).await;
         if let Err(Error::UnsupportedAddressType(t)) = result {
             assert_eq!(t, 0x02);
