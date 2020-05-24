@@ -32,7 +32,7 @@ The server address (`-s`), server port (`-p`) and password (`-k`) flags must mat
 
 Encryption
 ----------
-Four types of ciphers are supported:
+Five types of ciphers are supported:
 
 * `chacha20-ietf-poly1305` provided by sodium
 * `xchacha20-ietf-poly1305` provided by sodium
