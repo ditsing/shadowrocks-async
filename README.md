@@ -17,8 +17,6 @@ functionality.
 
 How to run
 ----------
-JSON configuration files and `ss://` URLs described in [SIP002][3] are not yet supported.
-
 To start the local SOCKS5 server at port `51980`, run
 ```shell script
 cargo run -- -l 51980 -s 127.0.0.1 -p 51986 -k test-password
@@ -29,6 +27,8 @@ In the meantime, start the remote shadow server by running
 cargo run -- --shadow -s 127.0.0.1 -p 51986 -k test-password
 ```
 The server address (`-s`), server port (`-p`) and password (`-k`) flags must match.
+
+JSON configuration files and `ss://` URLs described in [SIP002][3] are not yet supported.
 
 Encryption
 ----------
