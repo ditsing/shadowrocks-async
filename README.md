@@ -1,5 +1,10 @@
 Shadowrocks
 ===========
+[![Build Status](https://img.shields.io/travis/ditsing/shadowrocks-async.svg?branch=master)](https://travis-ci.org/github/ditsing/shadowrocks-async)
+[![Code Size](https://img.shields.io/github/languages/code-size/ditsing/shadowrocks-async)]()
+[![Last Commit](https://img.shields.io/github/last-commit/ditsing/shadowrocks-async)](https://github.com/ditsing/shadowrocks-async/commits/master)
+[![MIT License](https://img.shields.io/github/license/ditsing/shadowrocks-async)](https://github.com/ditsing/shadowrocks-async/blob/master/MIT-LICENSE)
+
 ***Throwing rocks against the wall***
 
 Shadowrocks is a [`shadowsocks`](http://shadowsocks.org) port written in pure `async/.await` Rust.
@@ -61,7 +66,7 @@ In compatible mode, `shadowrocks` behaves the same as the original version.
 Features
 ---------------
 - [x] TCP tunneling
-- [ ] Integrate Clippy
+- [x] Integrate Clippy
 - [ ] Benchmarks
 - [ ] Integration testing
 - [ ] Crate level documentation
