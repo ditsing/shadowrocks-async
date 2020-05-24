@@ -1,5 +1,6 @@
 extern crate shadowrocks;
 
+use shadowrocks::utils::create_any_tcp_listener;
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 
@@ -90,61 +91,42 @@ pub fn replay(data: &[u8], outgoing: SocketAddr) -> std::io::Result<Vec<u8>> {
 }
 
 fn run_replay_attack(compatible_mode: bool) -> std::io::Result<Vec<u8>> {
-    let middleman_server = TcpListener::bind("127.0.0.1:0")?;
+    let middleman_server = create_any_tcp_listener()?;
     let middleman_server_addr = middleman_server.local_addr()?;
 
-    let (socks_server_addr_str, shadow_server_addr_str) = if compatible_mode {
-        ("127.0.0.1:41980", "127.0.0.1:41986")
-    } else {
-        ("127.0.0.1:61980", "127.0.0.1:61986")
+    let shadow_tcp_listener = create_any_tcp_listener()?;
+    let shadow_server_addr = shadow_tcp_listener.local_addr()?;
+
+    let socks_tcp_listener = create_any_tcp_listener()?;
+    let socks_server_addr = socks_tcp_listener.local_addr()?;
+
+    let global_config = shadowrocks::GlobalConfig {
+        master_key: vec![1u8; 32],
+        cipher_type: shadowrocks::CipherType::Chacha20IetfPoly1305,
+        timeout: std::time::Duration::from_secs(300),
+        fast_open: false,
+        compatible_mode,
     };
-    let socks_server_addr: SocketAddr = socks_server_addr_str
-        .parse()
-        .expect("Address must be valid.");
-    let shadow_server_addr: SocketAddr = shadow_server_addr_str
-        .parse()
-        .expect("Address must be valid.");
-    let mut rt = tokio::runtime::Runtime::new()
-        .expect("Should not fail when creating a runtime.");
+
     println!("Starting tokio runtime and servers");
-    let (socks_server, shadow_server) = rt.block_on(async move {
-        let global_config = shadowrocks::GlobalConfig {
-            master_key: vec![1u8; 32],
-            cipher_type: shadowrocks::CipherType::Chacha20IetfPoly1305,
-            timeout: std::time::Duration::from_secs(300),
-            fast_open: false,
-            compatible_mode,
-        };
-
-        let socks_server = shadowrocks::socks_server::SocksServer::create(
-            socks_server_addr,
-            middleman_server_addr,
-            global_config,
-        )
-        .await
-        .expect("Creating server should not fail.");
-
-        let global_config = shadowrocks::GlobalConfig {
-            master_key: vec![1u8; 32],
-            cipher_type: shadowrocks::CipherType::Chacha20IetfPoly1305,
-            timeout: std::time::Duration::from_secs(300),
-            fast_open: false,
-            compatible_mode,
-        };
-        let shadow_server = shadowrocks::shadow_server::ShadowServer::create(
-            shadow_server_addr,
-            global_config,
-        )
-        .await
-        .expect("Creating server should not fail.");
-
-        (socks_server, shadow_server)
-    });
-
-    println!("Creating a thread to run servers");
     std::thread::spawn(move || {
+        let mut rt = tokio::runtime::Runtime::new()
+            .expect("Should not fail when creating a runtime.");
         // Note servers are not properly terminated.
         rt.block_on(async move {
+            let socks_server = shadowrocks::SocksServer::create_from_std(
+                socks_tcp_listener,
+                middleman_server_addr,
+                global_config.clone(),
+            )
+            .expect("Creating server should not fail.");
+
+            let shadow_server = shadowrocks::ShadowServer::create_from_std(
+                shadow_tcp_listener,
+                #[allow(clippy::redundant_clone)]
+                global_config.clone(),
+            )
+            .expect("Creating server should not fail.");
             tokio::join!(socks_server.run(), shadow_server.run());
         });
     });

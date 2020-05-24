@@ -88,7 +88,27 @@ impl SocksServer {
                 .next()
                 .expect("Expecting a valid server address and port as remote"),
             tcp_listener: TcpListener::bind(addr).await?,
+            global_config,
+        })
+    }
 
+    /// Create a socks server from an existing TCP listener.
+    /// This function is intended for tests only. Note it only works WITHIN a
+    /// tokio runtime environment.
+    pub fn create_from_std(
+        tcp_listener: std::net::TcpListener,
+        remote: SocketAddr,
+        global_config: GlobalConfig,
+    ) -> Result<Self> {
+        info!("Creating SOCKS5 server ...");
+        let tcp_listener = TcpListener::from_std(tcp_listener)?;
+        info!(
+            "Starting socks server at address {} ...",
+            tcp_listener.local_addr()?
+        );
+        Ok(Self {
+            remote_addr: remote,
+            tcp_listener,
             global_config,
         })
     }

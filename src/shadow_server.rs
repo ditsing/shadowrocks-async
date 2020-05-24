@@ -29,6 +29,23 @@ impl ShadowServer {
         })
     }
 
+    /// Create a shadow server from an existing TCP listener.
+    /// Note this function only works WITHIN a tokio runtime environment.
+    pub fn create_from_std(
+        tcp_listener: std::net::TcpListener,
+        global_config: GlobalConfig,
+    ) -> Result<Self> {
+        info!("Creating shadow server ...");
+        info!(
+            "Starting shadow server at address {} ...",
+            tcp_listener.local_addr()?
+        );
+        Ok(Self {
+            tcp_listener: TcpListener::from_std(tcp_listener)?,
+            global_config,
+        })
+    }
+
     async fn serve_shadow_stream(
         stream: TcpStream,
         global_config: Arc<GlobalConfig>,

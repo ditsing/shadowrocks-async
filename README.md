@@ -68,7 +68,7 @@ Features
 - [x] TCP tunneling
 - [x] Integrate Clippy
 - [ ] Benchmarks
-- [ ] Integration testing
+- [x] Integration testing
 - [ ] Crate level documentation
 - [ ] Document the code in `src/crypto` in detail
 - [ ] UDP tunneling with optional fake-tcp
