@@ -28,7 +28,8 @@ cargo run -- --shadow -s 127.0.0.1 -p 51986 -k test-password
 ```
 The server address (`-s`), server port (`-p`) and password (`-k`) flags must match.
 
-JSON configuration files and `ss://` URLs described in [SIP002][3] are not yet supported.
+JSON configuration files (`-c`) are also supported. `ss://` URLs described
+in [SIP002][3] will come soon.
 
 Encryption
 ----------

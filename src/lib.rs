@@ -5,6 +5,8 @@ extern crate openssl;
 extern crate rand;
 #[cfg(feature = "ring")]
 extern crate ring;
+extern crate serde;
+extern crate serde_json;
 extern crate sodiumoxide;
 extern crate stderrlog;
 extern crate tokio;
@@ -15,6 +17,7 @@ extern crate tokio;
 mod test_utils;
 
 mod async_io;
+mod config_flags;
 mod crypto;
 mod encrypted_stream;
 mod error;
@@ -34,6 +37,8 @@ pub use crate::crypto::{
     derive_master_key_compatible, derive_master_key_pbkdf2, lookup_cipher,
     CipherType,
 };
+
+pub use config_flags::{parse_config_file, ParsedFlags};
 
 #[derive(Clone)]
 pub struct GlobalConfig {

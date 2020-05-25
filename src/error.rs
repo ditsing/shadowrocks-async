@@ -11,6 +11,7 @@ pub enum Error {
     EncryptionError,
     DecryptionError,
     UnknownCipher(String),
+    InvalidConfigFile(String),
 }
 
 impl std::fmt::Display for Error {
@@ -40,6 +41,9 @@ impl std::fmt::Display for Error {
             Error::EncryptionError => write!(f, "Encryption error"),
             Error::DecryptionError => write!(f, "Decryption error"),
             Error::UnknownCipher(s) => write!(f, "Unknown cipher {}", s),
+            Error::InvalidConfigFile(s) => {
+                write!(f, "Invalid config file {}", s)
+            }
         }
     }
 }

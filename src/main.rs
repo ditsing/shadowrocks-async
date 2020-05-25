@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use shadowrocks::{
     derive_master_key_compatible, derive_master_key_pbkdf2, lookup_cipher,
-    shadow_server, socks_server, GlobalConfig, Result,
+    parse_config_file, shadow_server, socks_server, GlobalConfig, Result,
 };
 
 fn choose_log_level() -> log::LevelFilter {
@@ -35,9 +35,11 @@ async fn main() -> Result<()> {
             -p [SERVER_PORT]         'server port, default: 8388'
             -b [LOCAL_ADDR]          'local binding address, default: 127.0.0.1'
             -l [LOCAL_PORT]          'local port, default: 1080'
-            -k <PASSWORD>            'password'
+            -k [PASSWORD]            'password'
             -m [METHOD]              'encryption method to use, default: aes-256-gcm. Other valid values are: aes-128-gcm, aes-192-gcm, aes-256-gcm, chacha20-ietf-poly1305, xchacha20-ietf-poly1305'
             -t [TIMEOUT]             'timeout in seconds, default: 300'
+            -c [CONFIG_FILE]         'path to config file. See https://github.com/shadowsocks/shadowsocks/wiki/Configuration-via-Config-File'
+
 
             --fast-open              'use TCP_FASTOPEN, requires Linux 3.7+, default: false'
             --compatible-mode        'keep compatible with Shadowsocks in encryption-related areas, default: false'
@@ -45,6 +47,19 @@ async fn main() -> Result<()> {
         ")
         .after_help("Homepage: <https://github.com/ditsing/shadowrocks>");
     let matches = app.get_matches();
+
+    let config_file =
+        matches.value_of("c").map(parse_config_file).transpose()?;
+    let config_file = config_file.as_ref();
+    let password =
+        config_file
+            .map(|c| c.password.as_slice())
+            .unwrap_or_else(|| {
+                matches
+                    .value_of("k")
+                    .expect("Password is required.")
+                    .as_bytes()
+            });
 
     let server_addr = matches.value_of("s").unwrap_or("0.0.0.0");
     let server_port: u16 = matches
@@ -56,6 +71,9 @@ async fn main() -> Result<()> {
         .to_socket_addrs()?
         .next()
         .expect("Expecting a valid server address and port.");
+    let server_socket_addr = config_file
+        .and_then(|c| c.server_addr)
+        .unwrap_or(server_socket_addr);
 
     let local_addr = matches.value_of("b").unwrap_or("127.0.0.1");
     let local_port: u16 = matches
@@ -67,11 +85,17 @@ async fn main() -> Result<()> {
         .to_socket_addrs()?
         .next()
         .expect("Expecting a valid server address and port.");
+    let local_socket_addr = config_file
+        .and_then(|c| c.local_addr)
+        .unwrap_or(local_socket_addr);
 
     let is_shadow_server = matches.is_present("shadow");
 
-    let password = matches.value_of("k").expect("Password is required.");
     let cipher_name = matches.value_of("m").unwrap_or("aes-256-gcm");
+    let cipher_name = config_file
+        .and_then(|c| c.encryption_method.as_ref())
+        .map(|s| s.as_str())
+        .unwrap_or(cipher_name);
     let cipher_type = lookup_cipher(cipher_name)?;
     let timeout = matches
         .value_of("t")
@@ -80,16 +104,15 @@ async fn main() -> Result<()> {
         .map(Duration::from_secs)
         .expect("Timeout must be a valid integer.");
     let fast_open = matches.is_present("fast_open");
+    let fast_open = config_file.and_then(|c| c.fast_open).unwrap_or(fast_open);
     let compatible_mode = matches.is_present("compatible-mode");
+
     let global_config = GlobalConfig {
         master_key: if compatible_mode {
-            derive_master_key_compatible(
-                password.as_bytes(),
-                cipher_type.spec().key_size,
-            )?
+            derive_master_key_compatible(password, cipher_type.spec().key_size)?
         } else {
             derive_master_key_pbkdf2(
-                password.as_bytes(),
+                password,
                 &[],
                 cipher_type.spec().key_size,
             )?
