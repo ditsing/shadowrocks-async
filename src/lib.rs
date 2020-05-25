@@ -1,5 +1,4 @@
 extern crate async_trait;
-extern crate clap;
 extern crate log;
 extern crate openssl;
 extern crate rand;
@@ -8,7 +7,6 @@ extern crate ring;
 extern crate serde;
 extern crate serde_json;
 extern crate sodiumoxide;
-extern crate stderrlog;
 extern crate tokio;
 
 // Don't move! macros defined in test_utils must be included first.

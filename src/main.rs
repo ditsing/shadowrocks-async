@@ -1,3 +1,4 @@
+extern crate clap;
 extern crate shadowrocks;
 
 use std::net::ToSocketAddrs;
@@ -7,22 +8,12 @@ use shadowrocks::{
     shadow_server, socks_server, GlobalConfig, ParsedFlags, Result,
 };
 
-fn choose_log_level() -> log::LevelFilter {
-    if cfg!(debug_assertions) {
-        log::LevelFilter::Debug
-    } else {
-        log::LevelFilter::Info
-    }
-}
+#[path = "bin/utils/mod.rs"]
+mod bin_utils;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    stderrlog::new()
-        .module(module_path!())
-        .timestamp(stderrlog::Timestamp::Microsecond)
-        .verbosity(choose_log_level() as usize)
-        .init()
-        .unwrap();
+    bin_utils::log_init();
 
     let app = clap::App::new("shadowrocks")
         .version("0.1")

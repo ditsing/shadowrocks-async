@@ -46,6 +46,20 @@ impl FromStr for CipherType {
     }
 }
 
+impl CipherType {
+    const POSSIBLE_CIPHERS: [&'static str; 5] = [
+        "aes-128-gcm",
+        "aes-192-gcm",
+        "aes-256-gcm",
+        "chacha20-ietf-poly1305",
+        "xchacha20-ietf-poly1305",
+    ];
+
+    pub fn possible_ciphers() -> &'static [&'static str] {
+        &Self::POSSIBLE_CIPHERS
+    }
+}
+
 pub struct CipherSpec {
     pub cipher_type: CipherType,
     pub key_size: usize,

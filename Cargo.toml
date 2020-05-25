@@ -12,6 +12,14 @@ license = "MIT"
 keywords = ["shadowsocks"]
 categories = [""]
 
+[[bin]]
+name = "ss-local"
+path = "src/bin/local.rs"
+
+[[bin]]
+name = "ss-server"
+path = "src/bin/server.rs"
+
 [features]
 default = ["ring-crypto"]
 ring-crypto = ["ring"]
