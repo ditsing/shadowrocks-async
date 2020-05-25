@@ -17,10 +17,10 @@ extern crate tokio;
 mod test_utils;
 
 mod async_io;
-mod config_flags;
 mod crypto;
 mod encrypted_stream;
 mod error;
+mod parsed_flags;
 pub mod shadow_server;
 mod socks5_addr;
 pub mod socks_server;
@@ -38,7 +38,7 @@ pub use crate::crypto::{
     CipherType,
 };
 
-pub use config_flags::{parse_config_file, ParsedFlags};
+pub use parsed_flags::{parse_config_file, ParsedFlags};
 
 #[derive(Clone)]
 pub struct GlobalConfig {

@@ -8,6 +8,17 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Error, Result};
 
+pub struct ParsedFlags {
+    pub server_addr: Option<SocketAddr>,
+    pub local_addr: Option<SocketAddr>,
+
+    pub password: Vec<u8>,
+    pub encryption_method: Option<String>,
+
+    pub timeout: Option<Duration>,
+    pub fast_open: Option<bool>,
+}
+
 #[derive(Serialize, Deserialize)]
 struct ConfigFile {
     server: Option<String>,
@@ -24,17 +35,6 @@ struct ConfigFile {
     timeout: Option<u64>,
 
     fast_open: Option<bool>,
-}
-
-pub struct ParsedFlags {
-    pub server_addr: Option<SocketAddr>,
-    pub local_addr: Option<SocketAddr>,
-
-    pub password: Vec<u8>,
-    pub encryption_method: Option<String>,
-
-    pub timeout: Option<Duration>,
-    pub fast_open: Option<bool>,
 }
 
 fn parse_addr(
