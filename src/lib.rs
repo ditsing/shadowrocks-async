@@ -34,11 +34,10 @@ pub use shadow_server::ShadowServer;
 pub use socks_server::SocksServer;
 
 pub use crate::crypto::{
-    derive_master_key_compatible, derive_master_key_pbkdf2, lookup_cipher,
-    CipherType,
+    derive_master_key_compatible, derive_master_key_pbkdf2, CipherType,
 };
 
-pub use parsed_flags::{parse_config_file, ParsedFlags};
+pub use parsed_flags::ParsedFlags;
 
 #[derive(Clone)]
 pub struct GlobalConfig {

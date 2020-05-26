@@ -4,9 +4,8 @@ use std::net::ToSocketAddrs;
 use std::time::Duration;
 
 use shadowrocks::{
-    derive_master_key_compatible, derive_master_key_pbkdf2, lookup_cipher,
-    parse_config_file, shadow_server, socks_server, GlobalConfig, ParsedFlags,
-    Result,
+    derive_master_key_compatible, derive_master_key_pbkdf2, shadow_server,
+    socks_server, CipherType, GlobalConfig, ParsedFlags, Result,
 };
 
 fn choose_log_level() -> log::LevelFilter {
@@ -49,8 +48,10 @@ async fn main() -> Result<()> {
         .after_help("Homepage: <https://github.com/ditsing/shadowrocks>");
     let matches = app.get_matches();
 
-    let parsed_flags =
-        matches.value_of("c").map(parse_config_file).transpose()?;
+    let parsed_flags = matches
+        .value_of("c")
+        .map(ParsedFlags::from_config_file)
+        .transpose()?;
     let parsed_flags = parsed_flags.as_ref();
     let password = parsed_flags.map(|c| c.password()).unwrap_or_else(|| {
         matches
@@ -88,10 +89,10 @@ async fn main() -> Result<()> {
     let is_shadow_server = matches.is_present("shadow");
 
     let cipher_name = matches.value_of("m").unwrap_or("aes-256-gcm");
-    let cipher_name = parsed_flags
+    let cipher_type: CipherType = parsed_flags
         .and_then(|c| c.encryption_method())
-        .unwrap_or(cipher_name);
-    let cipher_type = lookup_cipher(cipher_name)?;
+        .unwrap_or(cipher_name)
+        .parse()?;
     let timeout = matches
         .value_of("t")
         .unwrap_or("300")

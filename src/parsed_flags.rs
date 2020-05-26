@@ -69,48 +69,52 @@ struct ConfigFile {
     fast_open: Option<bool>,
 }
 
-fn parse_addr(
-    addr: Option<String>,
-    port: Option<u16>,
-    name: &str,
-) -> Result<Option<SocketAddrFlag>> {
-    match (addr, port) {
-        (Some(local), Some(port)) => Ok(Some(SocketAddrFlag(local, port))),
-        (None, None) => Ok(None),
-        _ => Err(Error::InvalidConfigFile(format!(
-            "{} must be specified together.",
-            name
-        ))),
+impl ParsedFlags {
+    fn parse_addr(
+        addr: Option<String>,
+        port: Option<u16>,
+        name: &str,
+    ) -> Result<Option<SocketAddrFlag>> {
+        match (addr, port) {
+            (Some(local), Some(port)) => Ok(Some(SocketAddrFlag(local, port))),
+            (None, None) => Ok(None),
+            _ => Err(Error::InvalidConfigFile(format!(
+                "{} must be specified together.",
+                name
+            ))),
+        }
     }
-}
 
-pub fn parse_config_file<P: AsRef<Path>>(file_name: P) -> Result<ParsedFlags> {
-    let file = File::open(file_name)?;
-    let config_file: ConfigFile = serde_json::from_reader(file)
-        .map_err(|e| Error::InvalidConfigFile(e.to_string()))?;
+    pub fn from_config_file<P: AsRef<Path>>(
+        file_name: P,
+    ) -> Result<ParsedFlags> {
+        let file = File::open(file_name)?;
+        let config_file: ConfigFile = serde_json::from_reader(file)
+            .map_err(|e| Error::InvalidConfigFile(e.to_string()))?;
 
-    let server_addr = parse_addr(
-        config_file.server,
-        config_file.server_port,
-        &"'server' and 'server_port'",
-    )?;
+        let server_addr = Self::parse_addr(
+            config_file.server,
+            config_file.server_port,
+            &"'server' and 'server_port'",
+        )?;
 
-    let local_addr = parse_addr(
-        config_file.local_address,
-        config_file.local_port,
-        &"'local_address' and 'local_port'",
-    )?;
+        let local_addr = Self::parse_addr(
+            config_file.local_address,
+            config_file.local_port,
+            &"'local_address' and 'local_port'",
+        )?;
 
-    Ok(ParsedFlags {
-        server_addr,
-        local_addr,
+        Ok(ParsedFlags {
+            server_addr,
+            local_addr,
 
-        password: config_file.password.into_bytes(),
-        encryption_method: config_file.method,
+            password: config_file.password.into_bytes(),
+            encryption_method: config_file.method,
 
-        timeout: config_file.timeout.map(Duration::from_secs),
-        fast_open: config_file.fast_open,
-    })
+            timeout: config_file.timeout.map(Duration::from_secs),
+            fast_open: config_file.fast_open,
+        })
+    }
 }
 
 #[cfg(test)]
@@ -120,7 +124,7 @@ mod tests {
 
     use rand::Rng;
 
-    use crate::{parse_config_file, Result};
+    use crate::Result;
 
     use super::*;
 
@@ -177,7 +181,7 @@ mod tests {
         "#,
         )?;
 
-        let parsed_flags = parse_config_file(config_file)?;
+        let parsed_flags = ParsedFlags::from_config_file(config_file)?;
         assert_eq!(parsed_flags.server_addr(), Some(("8.8.4.4", 99)));
         assert_eq!(parsed_flags.local_addr(), Some(("127.0.0.1", 88)));
         assert_eq!(parsed_flags.password, b"1234567");
@@ -200,7 +204,7 @@ mod tests {
         "#,
         )?;
 
-        let parsed_flags = parse_config_file(config_file)?;
+        let parsed_flags = ParsedFlags::from_config_file(config_file)?;
         assert_eq!(parsed_flags.server_addr(), None);
         assert_eq!(parsed_flags.local_addr(), None);
         assert_eq!(parsed_flags.password, b"1234567");
@@ -220,7 +224,7 @@ mod tests {
         }
         "#,
         )?;
-        match parse_config_file(config_file) {
+        match ParsedFlags::from_config_file(config_file) {
             Ok(_) => {
                 panic!("Parse should not work since password is required.")
             }
@@ -242,7 +246,7 @@ mod tests {
         }
         "#,
         )?;
-        match parse_config_file(config_file) {
+        match ParsedFlags::from_config_file(config_file) {
             Ok(_) => panic!("Parse should not work since port is required."),
             Err(Error::InvalidConfigFile(s)) => {
                 assert_eq!(
@@ -265,7 +269,7 @@ mod tests {
         }
         "#,
         )?;
-        match parse_config_file(config_file) {
+        match ParsedFlags::from_config_file(config_file) {
             Ok(_) => panic!("Parse should not work since address is required."),
             Err(Error::InvalidConfigFile(s)) => {
                 assert_eq!(

@@ -1,4 +1,3 @@
-pub use cipher_spec::lookup_cipher;
 pub use cipher_spec::CipherSpec;
 pub use cipher_spec::CipherType;
 

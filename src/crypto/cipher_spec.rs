@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::Error;
 use crate::Result;
 
@@ -25,6 +27,22 @@ impl CipherType {
         };
         assert_eq!(ret.cipher_type, self);
         ret
+    }
+}
+
+impl FromStr for CipherType {
+    type Err = Error;
+
+    fn from_str(name: &str) -> Result<Self> {
+        let cipher_type = match name {
+            "chacha20-ietf-poly1305" => CipherType::Chacha20IetfPoly1305,
+            "xchacha20-ietf-poly1305" => CipherType::XChacha20IetfPoly1305,
+            "aes-256-gcm" => CipherType::Aes256GCM,
+            "aes-192-gcm" => CipherType::Aes192GCM,
+            "aes-128-gcm" => CipherType::Aes128GCM,
+            _ => return Err(Error::UnknownCipher(name.into())),
+        };
+        Ok(cipher_type)
     }
 }
 
@@ -84,15 +102,3 @@ pub static NONE: CipherSpec = CipherSpec {
     nonce_size: 0,
     tag_size: 0,
 };
-
-pub fn lookup_cipher(name: &str) -> Result<CipherType> {
-    let cipher_type = match name {
-        "chacha20-ietf-poly1305" => CipherType::Chacha20IetfPoly1305,
-        "xchacha20-ietf-poly1305" => CipherType::XChacha20IetfPoly1305,
-        "aes-256-gcm" => CipherType::Aes256GCM,
-        "aes-192-gcm" => CipherType::Aes192GCM,
-        "aes-128-gcm" => CipherType::Aes128GCM,
-        _ => return Err(Error::UnknownCipher(name.into())),
-    };
-    Ok(cipher_type)
-}
