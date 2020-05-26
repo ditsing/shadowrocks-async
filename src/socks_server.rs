@@ -1,5 +1,5 @@
 use std::io::ErrorKind;
-use std::net::{Shutdown, SocketAddr, ToSocketAddrs};
+use std::net::{Shutdown, SocketAddr};
 use std::sync::Arc;
 
 use log::{debug, error, info};
@@ -75,18 +75,15 @@ impl SocksServer {
     const SOCKET_VERSION: u8 = 0x05u8;
     const RSV: u8 = 0x00u8;
 
-    pub async fn create<A: ToSocketAddrs>(
+    pub async fn create(
         addr: SocketAddr,
-        remote: A,
+        remote: SocketAddr,
         global_config: GlobalConfig,
     ) -> Result<Self> {
         info!("Creating SOCKS5 server ...");
         info!("Starting socks server at address {} ...", addr);
         Ok(Self {
-            remote_addr: remote
-                .to_socket_addrs()?
-                .next()
-                .expect("Expecting a valid server address and port as remote"),
+            remote_addr: remote,
             tcp_listener: TcpListener::bind(addr).await?,
             global_config,
         })
