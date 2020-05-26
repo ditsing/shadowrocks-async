@@ -52,15 +52,12 @@ async fn main() -> Result<()> {
     let parsed_flags =
         matches.value_of("c").map(parse_config_file).transpose()?;
     let parsed_flags = parsed_flags.as_ref();
-    let password =
-        parsed_flags
-            .map(|c| c.password.as_slice())
-            .unwrap_or_else(|| {
-                matches
-                    .value_of("k")
-                    .expect("Password is required.")
-                    .as_bytes()
-            });
+    let password = parsed_flags.map(|c| c.password()).unwrap_or_else(|| {
+        matches
+            .value_of("k")
+            .expect("Password is required.")
+            .as_bytes()
+    });
 
     let server_addr = matches.value_of("s").unwrap_or("0.0.0.0");
     let server_port: u16 = matches
@@ -92,8 +89,7 @@ async fn main() -> Result<()> {
 
     let cipher_name = matches.value_of("m").unwrap_or("aes-256-gcm");
     let cipher_name = parsed_flags
-        .and_then(|c| c.encryption_method.as_ref())
-        .map(|s| s.as_str())
+        .and_then(|c| c.encryption_method())
         .unwrap_or(cipher_name);
     let cipher_type = lookup_cipher(cipher_name)?;
     let timeout = matches
@@ -103,7 +99,9 @@ async fn main() -> Result<()> {
         .map(Duration::from_secs)
         .expect("Timeout must be a valid integer.");
     let fast_open = matches.is_present("fast_open");
-    let fast_open = parsed_flags.and_then(|c| c.fast_open).unwrap_or(fast_open);
+    let fast_open = parsed_flags
+        .and_then(|c| c.fast_open())
+        .unwrap_or(fast_open);
     let compatible_mode = matches.is_present("compatible-mode");
 
     let global_config = GlobalConfig {

@@ -13,11 +13,11 @@ pub struct ParsedFlags {
     server_addr: Option<SocketAddrFlag>,
     local_addr: Option<SocketAddrFlag>,
 
-    pub password: Vec<u8>,
-    pub encryption_method: Option<String>,
+    password: Vec<u8>,
+    encryption_method: Option<String>,
 
-    pub timeout: Option<Duration>,
-    pub fast_open: Option<bool>,
+    timeout: Option<Duration>,
+    fast_open: Option<bool>,
 }
 
 // Wrap server_addr and local_addr so that they can be converted to SocketAddr.
@@ -32,6 +32,22 @@ impl ParsedFlags {
         self.local_addr
             .as_ref()
             .map(|addr| (addr.0.as_str(), addr.1))
+    }
+
+    pub fn password(&self) -> &[u8] {
+        self.password.as_ref()
+    }
+
+    pub fn encryption_method(&self) -> Option<&str> {
+        self.encryption_method.as_deref()
+    }
+
+    pub fn timeout(&self) -> Option<Duration> {
+        self.timeout
+    }
+
+    pub fn fast_open(&self) -> Option<bool> {
+        self.fast_open
     }
 }
 
