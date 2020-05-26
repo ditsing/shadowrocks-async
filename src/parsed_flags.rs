@@ -1,6 +1,4 @@
 use std::fs::File;
-use std::net::SocketAddr;
-use std::net::ToSocketAddrs;
 use std::path::Path;
 use std::time::Duration;
 
@@ -8,15 +6,33 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Error, Result};
 
+#[derive(Debug)]
+struct SocketAddrFlag(String, u16);
+
 pub struct ParsedFlags {
-    pub server_addr: Option<SocketAddr>,
-    pub local_addr: Option<SocketAddr>,
+    server_addr: Option<SocketAddrFlag>,
+    local_addr: Option<SocketAddrFlag>,
 
     pub password: Vec<u8>,
     pub encryption_method: Option<String>,
 
     pub timeout: Option<Duration>,
     pub fast_open: Option<bool>,
+}
+
+// Wrap server_addr and local_addr so that they can be converted to SocketAddr.
+impl ParsedFlags {
+    pub fn server_addr(&self) -> Option<(&str, u16)> {
+        self.server_addr
+            .as_ref()
+            .map(|addr| (addr.0.as_str(), addr.1))
+    }
+
+    pub fn local_addr(&self) -> Option<(&str, u16)> {
+        self.local_addr
+            .as_ref()
+            .map(|addr| (addr.0.as_str(), addr.1))
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -41,24 +57,9 @@ fn parse_addr(
     addr: Option<String>,
     port: Option<u16>,
     name: &str,
-) -> Result<Option<SocketAddr>> {
+) -> Result<Option<SocketAddrFlag>> {
     match (addr, port) {
-        (Some(local), Some(port)) => {
-            let mut iter =
-                (local.as_str(), port).to_socket_addrs().map_err(|e| {
-                    Error::InvalidConfigFile(format!(
-                        "Cannot parse {} into an address: {}",
-                        name, e,
-                    ))
-                })?;
-            let next = iter.next().ok_or_else(|| {
-                Error::InvalidConfigFile(format!(
-                    "{} does not translate to any address",
-                    name
-                ))
-            })?;
-            Ok(Some(next))
-        }
+        (Some(local), Some(port)) => Ok(Some(SocketAddrFlag(local, port))),
         (None, None) => Ok(None),
         _ => Err(Error::InvalidConfigFile(format!(
             "{} must be specified together.",
@@ -100,7 +101,6 @@ pub fn parse_config_file<P: AsRef<Path>>(file_name: P) -> Result<ParsedFlags> {
 mod tests {
     use std::io::Write;
     use std::path::PathBuf;
-    use std::str::FromStr;
 
     use rand::Rng;
 
@@ -162,20 +162,8 @@ mod tests {
         )?;
 
         let parsed_flags = parse_config_file(config_file)?;
-        assert_eq!(
-            parsed_flags.server_addr,
-            Some(
-                SocketAddr::from_str("8.8.4.4:99")
-                    .expect("Parsing should not fail.")
-            )
-        );
-        assert_eq!(
-            parsed_flags.local_addr,
-            Some(
-                SocketAddr::from_str("127.0.0.1:88")
-                    .expect("Parsing should not fail.")
-            )
-        );
+        assert_eq!(parsed_flags.server_addr(), Some(("8.8.4.4", 99)));
+        assert_eq!(parsed_flags.local_addr(), Some(("127.0.0.1", 88)));
         assert_eq!(parsed_flags.password, b"1234567");
         assert_eq!(
             parsed_flags.encryption_method,
@@ -197,10 +185,10 @@ mod tests {
         )?;
 
         let parsed_flags = parse_config_file(config_file)?;
-        assert_eq!(parsed_flags.server_addr, None,);
-        assert_eq!(parsed_flags.local_addr, None,);
+        assert_eq!(parsed_flags.server_addr(), None);
+        assert_eq!(parsed_flags.local_addr(), None);
         assert_eq!(parsed_flags.password, b"1234567");
-        assert_eq!(parsed_flags.encryption_method, None,);
+        assert_eq!(parsed_flags.encryption_method, None);
         assert_eq!(parsed_flags.timeout, None);
         assert_eq!(parsed_flags.fast_open, None);
         Ok(())
@@ -222,31 +210,6 @@ mod tests {
             }
             Err(Error::InvalidConfigFile(s)) => {
                 assert!(s.starts_with("missing field"))
-            }
-            _ => panic!("Expecting error to be InvalidConfigFile."),
-        };
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_config_file_malformed_address() -> Result<()> {
-        let config_file = Tempfile::create(
-            r#"
-        {
-            "local_address": "zzzz",
-            "local_port": 88,
-            "password": "1234567"
-        }
-        "#,
-        )?;
-        match parse_config_file(config_file) {
-            Ok(_) => {
-                panic!("Parse should not work since address is not valid.")
-            }
-            Err(Error::InvalidConfigFile(s)) => {
-                let msg = "Cannot parse 'local_address' and \
-                'local_port' into an address";
-                assert!(s.starts_with(msg));
             }
             _ => panic!("Expecting error to be InvalidConfigFile."),
         };

@@ -5,7 +5,8 @@ use std::time::Duration;
 
 use shadowrocks::{
     derive_master_key_compatible, derive_master_key_pbkdf2, lookup_cipher,
-    parse_config_file, shadow_server, socks_server, GlobalConfig, Result,
+    parse_config_file, shadow_server, socks_server, GlobalConfig, ParsedFlags,
+    Result,
 };
 
 fn choose_log_level() -> log::LevelFilter {
@@ -48,11 +49,11 @@ async fn main() -> Result<()> {
         .after_help("Homepage: <https://github.com/ditsing/shadowrocks>");
     let matches = app.get_matches();
 
-    let config_file =
+    let parsed_flags =
         matches.value_of("c").map(parse_config_file).transpose()?;
-    let config_file = config_file.as_ref();
+    let parsed_flags = parsed_flags.as_ref();
     let password =
-        config_file
+        parsed_flags
             .map(|c| c.password.as_slice())
             .unwrap_or_else(|| {
                 matches
@@ -67,13 +68,12 @@ async fn main() -> Result<()> {
         .unwrap_or("8388")
         .parse()
         .expect("Server port must be a valid number.");
-    let server_socket_addr = (server_addr, server_port)
+    let server_socket_addr = parsed_flags
+        .and_then(ParsedFlags::server_addr)
+        .unwrap_or((server_addr, server_port))
         .to_socket_addrs()?
         .next()
         .expect("Expecting a valid server address and port.");
-    let server_socket_addr = config_file
-        .and_then(|c| c.server_addr)
-        .unwrap_or(server_socket_addr);
 
     let local_addr = matches.value_of("b").unwrap_or("127.0.0.1");
     let local_port: u16 = matches
@@ -81,18 +81,17 @@ async fn main() -> Result<()> {
         .unwrap_or("1080")
         .parse()
         .expect("Local port must be a valid number.");
-    let local_socket_addr = (local_addr, local_port)
+    let local_socket_addr = parsed_flags
+        .and_then(ParsedFlags::local_addr)
+        .unwrap_or((local_addr, local_port))
         .to_socket_addrs()?
         .next()
         .expect("Expecting a valid server address and port.");
-    let local_socket_addr = config_file
-        .and_then(|c| c.local_addr)
-        .unwrap_or(local_socket_addr);
 
     let is_shadow_server = matches.is_present("shadow");
 
     let cipher_name = matches.value_of("m").unwrap_or("aes-256-gcm");
-    let cipher_name = config_file
+    let cipher_name = parsed_flags
         .and_then(|c| c.encryption_method.as_ref())
         .map(|s| s.as_str())
         .unwrap_or(cipher_name);
@@ -104,7 +103,7 @@ async fn main() -> Result<()> {
         .map(Duration::from_secs)
         .expect("Timeout must be a valid integer.");
     let fast_open = matches.is_present("fast_open");
-    let fast_open = config_file.and_then(|c| c.fast_open).unwrap_or(fast_open);
+    let fast_open = parsed_flags.and_then(|c| c.fast_open).unwrap_or(fast_open);
     let compatible_mode = matches.is_present("compatible-mode");
 
     let global_config = GlobalConfig {
