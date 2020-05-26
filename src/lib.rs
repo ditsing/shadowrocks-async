@@ -20,31 +20,17 @@ mod async_io;
 mod crypto;
 mod encrypted_stream;
 mod error;
+mod global_config;
 mod parsed_flags;
 pub mod shadow_server;
 mod socks5_addr;
 pub mod socks_server;
 pub mod utils;
 
-use std::time::Duration;
-
 pub use error::Error;
 pub type Result<T> = std::result::Result<T, Error>;
+pub use crypto::CipherType;
+pub use global_config::GlobalConfig;
+pub use parsed_flags::ParsedFlags;
 pub use shadow_server::ShadowServer;
 pub use socks_server::SocksServer;
-
-pub use crate::crypto::{
-    derive_master_key_compatible, derive_master_key_pbkdf2, CipherType,
-};
-
-pub use parsed_flags::ParsedFlags;
-
-#[derive(Clone)]
-pub struct GlobalConfig {
-    pub master_key: Vec<u8>,
-    pub cipher_type: CipherType,
-    pub timeout: Duration,
-    #[allow(dead_code)]
-    pub fast_open: bool,
-    pub compatible_mode: bool,
-}

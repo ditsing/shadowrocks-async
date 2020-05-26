@@ -4,8 +4,7 @@ use std::net::ToSocketAddrs;
 use std::time::Duration;
 
 use shadowrocks::{
-    derive_master_key_compatible, derive_master_key_pbkdf2, shadow_server,
-    socks_server, CipherType, GlobalConfig, ParsedFlags, Result,
+    shadow_server, socks_server, GlobalConfig, ParsedFlags, Result,
 };
 
 fn choose_log_level() -> log::LevelFilter {
@@ -89,10 +88,9 @@ async fn main() -> Result<()> {
     let is_shadow_server = matches.is_present("shadow");
 
     let cipher_name = matches.value_of("m").unwrap_or("aes-256-gcm");
-    let cipher_type: CipherType = parsed_flags
+    let cipher_name = parsed_flags
         .and_then(|c| c.encryption_method())
-        .unwrap_or(cipher_name)
-        .parse()?;
+        .unwrap_or(cipher_name);
     let timeout = matches
         .value_of("t")
         .unwrap_or("300")
@@ -105,21 +103,13 @@ async fn main() -> Result<()> {
         .unwrap_or(fast_open);
     let compatible_mode = matches.is_present("compatible-mode");
 
-    let global_config = GlobalConfig {
-        master_key: if compatible_mode {
-            derive_master_key_compatible(password, cipher_type.spec().key_size)?
-        } else {
-            derive_master_key_pbkdf2(
-                password,
-                &[],
-                cipher_type.spec().key_size,
-            )?
-        },
-        cipher_type,
+    let global_config = GlobalConfig::build(
+        password,
+        cipher_name,
         timeout,
         fast_open,
         compatible_mode,
-    };
+    )?;
 
     if is_shadow_server {
         let server = shadow_server::ShadowServer::create(
