@@ -4,13 +4,13 @@ version = "0.1.0"
 authors = ["Jing Yang <ditsing@gmail.com>"]
 edition = "2018"
 description = "Shadowsocks port in pure async/.await Rust."
-documentation = ""
+documentation = "https://docs.rs/shadowrocks"
 readme = "README.md"
 homepage = "https://github.com/ditsing/shadowrocks-async"
 repository = "https://github.com/ditsing/shadowrocks-async"
 license = "MIT"
-keywords = ["shadowsocks"]
-categories = [""]
+keywords = ["shadowsocks", "proxy"]
+categories = ["network-programming"]
 
 [[bin]]
 name = "ss-local"

@@ -1,6 +1,7 @@
 Shadowrocks
 ===========
 [![Build Status](https://img.shields.io/travis/ditsing/shadowrocks-async.svg?branch=master)](https://travis-ci.org/github/ditsing/shadowrocks-async)
+[![Crate](https://img.shields.io/crates/v/shadowrocks)](https://crates.io/crates/shadowrocks)
 [![Code Size](https://img.shields.io/github/languages/code-size/ditsing/shadowrocks-async)]()
 [![Last Commit](https://img.shields.io/github/last-commit/ditsing/shadowrocks-async)](https://github.com/ditsing/shadowrocks-async/commits/master)
 [![MIT License](https://img.shields.io/github/license/ditsing/shadowrocks-async)](https://github.com/ditsing/shadowrocks-async/blob/master/MIT-LICENSE)
@@ -28,8 +29,8 @@ cargo run -- --shadow -s 127.0.0.1 -p 51986 -k test-password
 ```
 The server address (`-s`), server port (`-p`) and password (`-k`) flags must match.
 
-JSON configuration files (`-c`) are also supported. `ss://` URLs described
-in [SIP002][3] will come soon.
+JSON configuration files (`-c`) and `ss://` URLs (`--server-url`) described in
+[SIP002][3] are also supported.
 
 Encryption
 ----------
