@@ -2,7 +2,7 @@
 extern crate clap;
 extern crate shadowrocks;
 
-use shadowrocks::{socks_server, CipherType, Result};
+use shadowrocks::{CipherType, Result, SocksServer};
 
 pub mod utils;
 
@@ -37,7 +37,7 @@ async fn main() -> Result<()> {
     let (global_config, local_socket_addr, server_socket_addr) =
         utils::parse_commandline_args(&matches)?;
 
-    let server = socks_server::SocksServer::create(
+    let server = SocksServer::create(
         local_socket_addr,
         server_socket_addr,
         global_config,

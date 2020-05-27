@@ -25,9 +25,9 @@ mod error;
 mod global_config;
 mod parsed_flags;
 mod parsed_server_url;
-pub mod shadow_server;
+mod shadow_server;
 mod socks5_addr;
-pub mod socks_server;
+mod socks_server;
 pub mod utils;
 
 pub use error::Error;

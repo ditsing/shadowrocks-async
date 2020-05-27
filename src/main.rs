@@ -5,8 +5,8 @@ use std::net::ToSocketAddrs;
 use std::time::Duration;
 
 use shadowrocks::{
-    shadow_server, socks_server, GlobalConfig, ParsedFlags, ParsedServerUrl,
-    Result,
+    GlobalConfig, ParsedFlags, ParsedServerUrl, Result, ShadowServer,
+    SocksServer,
 };
 
 #[path = "bin/utils/mod.rs"]
@@ -117,14 +117,11 @@ async fn main() -> Result<()> {
     )?;
 
     if is_shadow_server {
-        let server = shadow_server::ShadowServer::create(
-            server_socket_addr,
-            global_config,
-        )
-        .await?;
+        let server =
+            ShadowServer::create(server_socket_addr, global_config).await?;
         server.run().await
     } else {
-        let server = socks_server::SocksServer::create(
+        let server = SocksServer::create(
             local_socket_addr,
             server_socket_addr,
             global_config,
