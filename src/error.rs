@@ -12,6 +12,7 @@ pub enum Error {
     DecryptionError,
     UnknownCipher(String),
     InvalidConfigFile(String),
+    InvalidServerUrl(String),
 }
 
 impl std::fmt::Display for Error {
@@ -44,6 +45,7 @@ impl std::fmt::Display for Error {
             Error::InvalidConfigFile(s) => {
                 write!(f, "Invalid config file {}", s)
             }
+            Error::InvalidServerUrl(s) => write!(f, "Invalid server URL {}", s),
         }
     }
 }

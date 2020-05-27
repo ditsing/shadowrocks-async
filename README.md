@@ -77,7 +77,7 @@ Features
 - [x] Replay attack mitigation in non-compatible mode
 - [ ] Native obfuscation
 - [ ] [Manager][10] API to create servers on the fly
-- [ ] `ss://` URL and JSON config file
+- [x] `ss://` URL and JSON config file
 
 Crypto dependencies
 -------------------
@@ -136,7 +136,7 @@ still terrible.
 
 [1]: https://github.com/shadowsocks/shadowsocks "shadowsocks"
 [2]: https://github.com/shadowsocks/shadowsocks-rust "shadowsocks-rust"
-[3]: https://github.com/shadowsocks/shadowsocks-org/issues/27 "SIP002"
+[3]: https://shadowsocks.org/en/spec/SIP002-URI-Scheme.html "SIP002"
 [4]: https://tools.ietf.org/html/rfc2898#section-5.2 "RFC 2898"
 [5]: https://tools.ietf.org/html/rfc2898#section-5.1 "RFC 2898"
 [6]: https://tools.ietf.org/html/rfc5869 "RFC 5869"

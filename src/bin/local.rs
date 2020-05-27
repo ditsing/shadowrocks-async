@@ -23,10 +23,13 @@ async fn main() -> Result<()> {
         (@arg password: -k +takes_value display_order(6) "password")
         (@arg method: -m +takes_value display_order(7) default_value("aes-256-gcm") possible_values(CipherType::possible_ciphers()) "encryption method to use")
 
-        (@arg timeout: -t +takes_value display_order(8) default_value("300") "timeout in seconds")
+        (@arg server_url: --("server-url") +takes_value display_order(8)
+        "A url that identifies a server. See https://shadowsocks.org/en/spec/SIP002-URI-Scheme.html")
+
+        (@arg timeout: -t +takes_value display_order(9) default_value("300") "timeout in seconds")
         // Quote to escape hyphen "-"
-        (@arg fast_open: --("fast-open") display_order(9) "use TCP_FASTOPEN, requires Linux 3.7+")
-        (@arg compatible_mode: --("compatible-mode") display_order(10) "keep compatible with Shadowsocks")
+        (@arg fast_open: --("fast-open") display_order(10) "use TCP_FASTOPEN, requires Linux 3.7+")
+        (@arg compatible_mode: --("compatible-mode") display_order(11) "keep compatible with Shadowsocks")
     );
 
     let matches = app.get_matches();

@@ -5,7 +5,8 @@ use std::net::ToSocketAddrs;
 use std::time::Duration;
 
 use shadowrocks::{
-    shadow_server, socks_server, GlobalConfig, ParsedFlags, Result,
+    shadow_server, socks_server, GlobalConfig, ParsedFlags, ParsedServerUrl,
+    Result,
 };
 
 #[path = "bin/utils/mod.rs"]
@@ -30,6 +31,7 @@ async fn main() -> Result<()> {
             -t [TIMEOUT]             'timeout in seconds, default: 300'
             -c [CONFIG_FILE]         'path to config file. See https://github.com/shadowsocks/shadowsocks/wiki/Configuration-via-Config-File'
 
+            --server-url [SS_URL]    'A url that identifies a server. See https://shadowsocks.org/en/spec/SIP002-URI-Scheme.html.'
 
             --fast-open              'use TCP_FASTOPEN, requires Linux 3.7+, default: false'
             --compatible-mode        'keep compatible with Shadowsocks in encryption-related areas, default: false'
@@ -43,12 +45,22 @@ async fn main() -> Result<()> {
         .map(ParsedFlags::from_config_file)
         .transpose()?;
     let parsed_flags = parsed_flags.as_ref();
-    let password = parsed_flags.map(|c| c.password()).unwrap_or_else(|| {
-        matches
-            .value_of("k")
-            .expect("Password is required.")
-            .as_bytes()
-    });
+
+    let server_url = matches
+        .value_of("server-url")
+        .map(ParsedServerUrl::from_url_string)
+        .transpose()?;
+    let server_url = server_url.as_ref();
+
+    let password = parsed_flags
+        .map(|c| c.password())
+        .or_else(|| server_url.map(|s| s.password()))
+        .unwrap_or_else(|| {
+            matches
+                .value_of("k")
+                .expect("Password is required.")
+                .as_bytes()
+        });
 
     let server_addr = matches.value_of("s").unwrap_or("0.0.0.0");
     let server_port: u16 = matches
@@ -58,6 +70,7 @@ async fn main() -> Result<()> {
         .expect("Server port must be a valid number.");
     let server_socket_addr = parsed_flags
         .and_then(ParsedFlags::server_addr)
+        .or_else(|| server_url.map(|s| s.server_addr()))
         .unwrap_or((server_addr, server_port))
         .to_socket_addrs()?
         .next()
@@ -81,6 +94,7 @@ async fn main() -> Result<()> {
     let cipher_name = matches.value_of("m").unwrap_or("aes-256-gcm");
     let cipher_name = parsed_flags
         .and_then(|c| c.encryption_method())
+        .or_else(|| server_url.map(|s| s.encryption_method()))
         .unwrap_or(cipher_name);
     let timeout = matches
         .value_of("t")

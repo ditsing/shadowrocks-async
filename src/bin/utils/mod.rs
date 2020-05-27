@@ -4,7 +4,7 @@ extern crate stderrlog;
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::time::Duration;
 
-use shadowrocks::{GlobalConfig, ParsedFlags, Result};
+use shadowrocks::{GlobalConfig, ParsedFlags, ParsedServerUrl, Result};
 
 fn choose_log_level() -> log::LevelFilter {
     if cfg!(debug_assertions) {
@@ -33,6 +33,12 @@ pub fn parse_commandline_args(
         .transpose()?;
     let parsed_flags = parsed_flags.as_ref();
 
+    let server_url = matches
+        .value_of("server-url")
+        .map(ParsedServerUrl::from_url_string)
+        .transpose()?;
+    let server_url = server_url.as_ref();
+
     let server_addr = matches.value_of("server_addr").unwrap_or("0.0.0.0");
     let server_port: u16 = matches
         .value_of("server_port")
@@ -41,6 +47,7 @@ pub fn parse_commandline_args(
         .expect("Server port must be a valid number.");
     let server_socket_addr = parsed_flags
         .and_then(ParsedFlags::server_addr)
+        .or_else(|| server_url.map(|s| s.server_addr()))
         .unwrap_or((server_addr, server_port))
         .to_socket_addrs()?
         .next()
@@ -59,16 +66,20 @@ pub fn parse_commandline_args(
         .next()
         .expect("Expecting a valid server address and port.");
 
-    let password = parsed_flags.map(|c| c.password()).unwrap_or_else(|| {
-        matches
-            .value_of("password")
-            .expect("Password is required.")
-            .as_bytes()
-    });
+    let password = parsed_flags
+        .map(|c| c.password())
+        .or_else(|| server_url.map(|s| s.password()))
+        .unwrap_or_else(|| {
+            matches
+                .value_of("password")
+                .expect("Password is required.")
+                .as_bytes()
+        });
 
     let cipher_name = parsed_flags
         .and_then(|c| c.encryption_method())
         .or_else(|| matches.value_of("method"))
+        .or_else(|| server_url.map(|s| s.encryption_method()))
         .unwrap_or("aes-256-gcm");
 
     let timeout = matches
