@@ -5,6 +5,10 @@ use url::Url;
 
 use crate::{Error, Result};
 
+/// A struct to hold information contained in a `ss://` URL.
+///
+/// Query parameters are not yet supported. Plugin support will be added as they
+/// are being implemented.
 pub struct ParsedServerUrl {
     server_addr: (String, u16),
     encryption_method: String,

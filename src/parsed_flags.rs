@@ -9,6 +9,8 @@ use crate::{Error, Result};
 #[derive(Debug)]
 struct SocketAddrFlag(String, u16);
 
+/// A struct that holds parsed commandline flags, for both the local and remote
+/// servers.
 pub struct ParsedFlags {
     server_addr: Option<SocketAddrFlag>,
     local_addr: Option<SocketAddrFlag>,

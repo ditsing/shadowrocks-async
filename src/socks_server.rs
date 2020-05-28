@@ -11,7 +11,7 @@ use crate::encrypted_stream::EncryptedStream;
 use crate::socks5_addr::{Socks5Addr, Socks5AddrType};
 use crate::{Error, GlobalConfig, Result};
 
-/// A socks5 server that sits on the local side, close to the user of the socket proxy.
+/// A socks5 proxy that sits on the local side, closer to the user of the socket proxy.
 pub struct SocksServer {
     remote_addr: SocketAddr,
     tcp_listener: TcpListener,
