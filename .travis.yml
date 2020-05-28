@@ -9,6 +9,8 @@ script:
   - cargo clippy --all-targets --all-features -- -D warnings
   - cargo build --verbose
   - cargo test --verbose
+  - cargo test --no-default-features --verbose
+  - cargo test --no-default-features --features=ring-digest-in-hkdf --verbose
 jobs:
   allow_failures:
     - rust: nightly
