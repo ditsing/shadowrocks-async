@@ -20,12 +20,13 @@ How to run
 ----------
 To start the local SOCKS5 server at port `51980`, run
 ```shell script
-cargo run -- -l 51980 -s 127.0.0.1 -p 51986 -k test-password
+cargo run -- -l 51980 -s 9.9.9.9 -p 51986 -k test-password
 ```
 
-In the meantime, start the remote shadow server by running
+In the meantime, start the remote shadow server (e.g. on a VPS with public IP
+`9.9.9.9`) by running
 ```shell script
-cargo run -- --shadow -s 127.0.0.1 -p 51986 -k test-password
+cargo run -- --shadow -s 9.9.9.9 -p 51986 -k test-password
 ```
 The server address (`-s`), server port (`-p`) and password (`-k`) flags must match.
 
