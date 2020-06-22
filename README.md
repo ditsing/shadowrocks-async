@@ -16,6 +16,14 @@ python version][1] with `--compatible-mode`.
 The official Rust implementation of `shadowsocks` can be found [here][2]. It has way more
 functionality.
 
+Why
+---
+`shadowrocks` is better in several aspects.
+1. It is thoroughly tested. There is even a test for replay attack mitigation.
+2. Improved encryption, see [Compatibility](#Compatibility).
+3. It uses `async-trait` to simplify implementation. No more
+`fn poll_write(self: Pin<&mut Self>, ctx: &mut Context<'_>, buf: &[u8])`.
+
 How to run
 ----------
 To start the local SOCKS5 server at port `51980`, run
