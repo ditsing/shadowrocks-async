@@ -162,6 +162,7 @@ mod test {
     fn test_expected_ciphertext_length() {
         let mut data = Vec::with_capacity(1024);
         let mut crypter = make_crypter(NonceType::Sequential);
+        #[allow(clippy::same_item_push)]
         for _ in 0..1024 {
             data.push(5u8);
             let expected_size = crypter.expected_ciphertext_length(data.len());
@@ -266,6 +267,7 @@ mod test {
     fn test_expected_ciphertext_length_x() {
         let mut data = Vec::with_capacity(1024);
         let mut crypter = make_crypter_x(NonceType::Sequential);
+        #[allow(clippy::same_item_push)]
         for _ in 0..1024 {
             data.push(5u8);
             let expected_size = crypter.expected_ciphertext_length(data.len());
