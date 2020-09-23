@@ -64,7 +64,7 @@ the original version. Master key is still derived from the password.
 no longer considered secure. The input key to `HKDF` is still the master key.
 3. During encryption handshake, the salt used by the socks server to encrypt
 outgoing traffic is designated by the shadow server, while the salt used by the
-shadow server is designated by the socks server. The is the opposite to the
+shadow server is designated by the socks server. This is the opposite to the
 original version, where each server decides their own salt.
 
 Item #3 helps defend against replay attacks. If we can reasonably assume that
