@@ -23,9 +23,12 @@ fn run_random_iv_test(compatible_mode: bool) -> std::io::Result<()> {
         let addr = shadow_tcp_listener.local_addr()?;
         let global_config = global_config.clone();
         std::thread::spawn(move || {
-            let mut rt = tokio::runtime::Runtime::new()
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
                 .expect("Should not fail when creating a runtime.");
             let shadow_server = rt.block_on(async move {
+                shadow_tcp_listener.set_nonblocking(true).unwrap();
                 shadowrocks::ShadowServer::create_from_std(
                     shadow_tcp_listener,
                     global_config,

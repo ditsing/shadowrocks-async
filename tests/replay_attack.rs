@@ -110,10 +110,13 @@ fn run_replay_attack(compatible_mode: bool) -> std::io::Result<Vec<u8>> {
 
     println!("Starting tokio runtime and servers");
     std::thread::spawn(move || {
-        let mut rt = tokio::runtime::Runtime::new()
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
             .expect("Should not fail when creating a runtime.");
         // Note servers are not properly terminated.
         rt.block_on(async move {
+            socks_tcp_listener.set_nonblocking(true).unwrap();
             let socks_server = shadowrocks::SocksServer::create_from_std(
                 socks_tcp_listener,
                 middleman_server_addr,
@@ -121,6 +124,7 @@ fn run_replay_attack(compatible_mode: bool) -> std::io::Result<Vec<u8>> {
             )
             .expect("Creating server should not fail.");
 
+            shadow_tcp_listener.set_nonblocking(true).unwrap();
             let shadow_server = shadowrocks::ShadowServer::create_from_std(
                 shadow_tcp_listener,
                 #[allow(clippy::redundant_clone)]

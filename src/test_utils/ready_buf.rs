@@ -3,7 +3,7 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 
 use std::io::Error;
-use tokio::io::{AsyncRead, AsyncWrite};
+use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 
 // A buffer that supports both AsyncRead and AsyncWrite.
 // Could possibly be replaced by bytes::BufMut or tokio_test::io::Mock.
@@ -15,23 +15,22 @@ impl AsyncRead for ReadyBuf {
     fn poll_read(
         self: Pin<&mut Self>,
         _cx: &mut Context<'_>,
-        buf: &mut [u8],
-    ) -> Poll<std::result::Result<usize, std::io::Error>> {
+        buf: &mut ReadBuf<'_>,
+    ) -> Poll<std::result::Result<(), std::io::Error>> {
         let real_self = std::pin::Pin::into_inner(self);
         match real_self.buf_list.pop_front() {
             Some(mut data) => {
-                let mut len = 0;
-                while len < buf.len() && !data.is_empty() {
-                    buf[len] =
-                        data.pop_front().expect("deque should be non-empty.");
-                    len += 1;
-                }
+                let (first, second) = data.as_slices();
+                assert!(second.is_empty());
+                let len = std::cmp::min(buf.remaining(), first.len());
+                buf.put_slice(&first[0..len]);
+                data.drain(..len);
                 if !data.is_empty() {
                     real_self.buf_list.push_front(data);
                 }
-                Poll::Ready(Ok(len))
+                Poll::Ready(Ok(()))
             }
-            None => Poll::Ready(Ok(0)),
+            None => Poll::Ready(Ok(())),
         }
     }
 }

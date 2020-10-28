@@ -6,7 +6,7 @@ use shadowrocks::{CipherType, Result, SocksServer};
 
 pub mod utils;
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     utils::log_init();
 

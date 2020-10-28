@@ -146,9 +146,12 @@ mod test {
         let tcp_listener = TcpListener::bind(local_socket_addr)?;
         let server_addr = tcp_listener.local_addr()?;
         std::thread::spawn(move || {
-            let mut rt = tokio::runtime::Runtime::new()
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
                 .expect("Shout not error when creating a runtime.");
             rt.block_on(async {
+                tcp_listener.set_nonblocking(true).unwrap();
                 // The wrapping part must be done inside a tokio runtime environment.
                 let server = ShadowServer {
                     tcp_listener: tokio::net::TcpListener::from_std(
