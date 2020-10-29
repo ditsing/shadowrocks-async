@@ -5,9 +5,9 @@ use log::{debug, error, info};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::stream::StreamExt;
 
+use crate::{Error, GlobalConfig, Result};
 use crate::encrypted_stream::EncryptedStream;
 use crate::socks5_addr::Socks5Addr;
-use crate::{Error, GlobalConfig, Result};
 
 /// A proxy that sits on the remote server, closer to the destination of the connection.
 pub struct ShadowServer {
@@ -129,21 +129,19 @@ impl ShadowServer {
 #[cfg(test)]
 mod test {
     use std::io::{Read, Write};
-    use std::net::{TcpListener, TcpStream};
+    use std::net::TcpStream;
     use std::time::Duration;
 
     use crate::crypto::CipherType;
     use crate::test_utils::local_tcp_server::run_local_tcp_server;
+    use crate::utils::create_any_tcp_listener;
 
     use super::*;
 
-    const SOCKS_SERVER_ADDR: &str = "127.0.0.1:0";
     const DOMAIN_ADDR: &str = "localhost";
 
     fn start_and_connect_to_server() -> Result<TcpStream> {
-        let local_socket_addr: SocketAddr =
-            SOCKS_SERVER_ADDR.parse().expect("Parsing should not fail.");
-        let tcp_listener = TcpListener::bind(local_socket_addr)?;
+        let tcp_listener = create_any_tcp_listener()?;
         let server_addr = tcp_listener.local_addr()?;
         std::thread::spawn(move || {
             let rt = tokio::runtime::Builder::new_current_thread()

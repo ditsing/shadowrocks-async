@@ -392,17 +392,17 @@ impl SocksServer {
 #[cfg(test)]
 mod test {
     use std::io::{Read, Write};
-    use std::net::{TcpListener, TcpStream};
+    use std::net::TcpStream;
     use std::time::Duration;
 
     use crate::crypto::CipherType;
     use crate::test_utils::local_tcp_server::run_local_tcp_server;
     use crate::test_utils::ready_buf::ReadyBuf;
+    use crate::utils::create_any_tcp_listener;
 
     use super::*;
 
     const DEFAULT_REMOTE_ADDR: &str = "127.0.0.1:80";
-    const SOCKS_SERVER_ADDR: &str = "127.0.0.1:0";
 
     fn start_and_connect_to_server() -> Result<TcpStream> {
         start_and_connect_to_server_remote(
@@ -415,9 +415,7 @@ mod test {
     fn start_and_connect_to_server_remote(
         remote_addr: SocketAddr,
     ) -> Result<TcpStream> {
-        let local_socket_addr: SocketAddr =
-            SOCKS_SERVER_ADDR.parse().expect("Parsing should not fail.");
-        let tcp_listener = TcpListener::bind(local_socket_addr)?;
+        let tcp_listener = create_any_tcp_listener()?;
         let server_addr = tcp_listener.local_addr()?;
         std::thread::spawn(move || {
             let rt = tokio::runtime::Builder::new_current_thread()
