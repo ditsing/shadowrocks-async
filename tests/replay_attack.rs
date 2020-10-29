@@ -77,8 +77,7 @@ pub fn replay(data: &[u8], outgoing: SocketAddr) -> std::io::Result<Vec<u8>> {
     outgoing_stream.write_all(data)?;
 
     println!("Replay attack for shadow server reply.");
-    loop {
-        let bytes = outgoing_stream.read(&mut buf)?;
+    while let Ok(bytes) = outgoing_stream.read(&mut buf) {
         if bytes == 0 {
             break;
         }
