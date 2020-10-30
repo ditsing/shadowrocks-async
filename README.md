@@ -1,6 +1,6 @@
 Shadowrocks
 ===========
-[![Build Status](https://img.shields.io/travis/ditsing/shadowrocks-async.svg?branch=master)](https://travis-ci.org/github/ditsing/shadowrocks-async)
+[![Build Status](https://img.shields.io/travis/ditsing/shadowrocks-async.svg?branch=master)](https://travis-ci.com/github/ditsing/shadowrocks-async)
 [![Crate](https://img.shields.io/crates/v/shadowrocks)](https://crates.io/crates/shadowrocks)
 [![Code Size](https://img.shields.io/github/languages/code-size/ditsing/shadowrocks-async)]()
 [![Last Commit](https://img.shields.io/github/last-commit/ditsing/shadowrocks-async)](https://github.com/ditsing/shadowrocks-async/commits/master)
