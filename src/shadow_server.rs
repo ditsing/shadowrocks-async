@@ -3,11 +3,10 @@ use std::sync::Arc;
 
 use log::{debug, error, info};
 use tokio::net::{TcpListener, TcpStream};
-use tokio::stream::StreamExt;
 
-use crate::{Error, GlobalConfig, Result};
 use crate::encrypted_stream::EncryptedStream;
 use crate::socks5_addr::Socks5Addr;
+use crate::{Error, GlobalConfig, Result};
 
 /// A proxy that sits on the remote server, closer to the destination of the connection.
 pub struct ShadowServer {
@@ -99,14 +98,14 @@ impl ShadowServer {
         Ok(())
     }
 
-    pub async fn run(mut self) {
+    pub async fn run(self) {
         info!("Running shadow server loop ...");
         info!("Timeout of {:?} is ignored.", self.global_config.timeout);
         info!("Connection will be kept alive until there is an error.");
         let base_global_config = Arc::new(self.global_config);
-        while let Some(stream) = self.tcp_listener.next().await {
-            match stream {
-                Ok(stream) => {
+        loop {
+            match self.tcp_listener.accept().await {
+                Ok((stream, _addr)) => {
                     let global_config = base_global_config.clone();
                     tokio::spawn(async move {
                         info!("New connection");

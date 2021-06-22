@@ -1,10 +1,9 @@
 use std::io::ErrorKind;
-use std::net::{Shutdown, SocketAddr};
+use std::net::{SocketAddr, Shutdown};
 use std::sync::Arc;
 
 use log::{debug, error, info};
 use tokio::net::{TcpListener, TcpStream};
-use tokio::stream::StreamExt;
 
 use crate::async_io::{AsyncReadTrait, AsyncWriteTrait};
 use crate::encrypted_stream::EncryptedStream;
@@ -205,7 +204,7 @@ impl SocksServer {
 
         if method == Method::NoAcceptableMethods {
             info!("No auth methods available, shutting down connection.");
-            stream.shutdown(Shutdown::Both)?;
+            stream.into_std()?.shutdown(Shutdown::Both)?;
             return Ok(());
         }
 
@@ -351,21 +350,21 @@ impl SocksServer {
 
                 stream.write_all(&unsupported_reply).await?;
                 info!("Closing connection");
-                stream.shutdown(Shutdown::Both)?;
+                stream.into_std()?.shutdown(Shutdown::Both)?;
                 info!("Connection closed.");
             }
         }
         Ok(())
     }
 
-    pub async fn run(mut self) {
+    pub async fn run(self) {
         info!("Running socks server loop ...");
         info!("Timeout of {:?} is ignored.", self.global_config.timeout);
         info!("Connection will be kept alive until there is an error.");
         let base_global_config = Arc::new(self.global_config);
-        while let Some(stream) = self.tcp_listener.next().await {
-            match stream {
-                Ok(stream) => {
+        loop {
+            match self.tcp_listener.accept().await {
+                Ok((stream, _addr)) => {
                     let remote_addr = self.remote_addr;
                     let global_config = base_global_config.clone();
                     tokio::spawn(async move {

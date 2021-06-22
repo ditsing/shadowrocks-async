@@ -30,11 +30,11 @@ async-trait = "0.1"
 log = { version = "~0.4", features = ["max_level_debug", "release_max_level_warn"] }
 stderrlog = "~0.5"
 clap = "~2.33.0"
-ring = { version = "~0.16.7", optional = true }
-openssl = "~0.10.24"
+ring = { version = "~0.16", optional = true }
+openssl = { version = "~0.10.35", features = ["vendored"] }
 rand = "0.7"
 sodiumoxide = "0.2"
-tokio = { version = "0.3", features = ["net", "io-util", "macros", "rt", "stream"] }
+tokio = { version = "1.7", features = ["net", "io-util", "macros", "rt"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 url = "2.1"
