@@ -9,12 +9,9 @@ use shadowrocks::{
     SocksServer,
 };
 
-#[path = "bin/utils/mod.rs"]
-mod bin_utils;
-
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
-    bin_utils::log_init();
+    env_logger::init();
 
     let app = clap::App::new("shadowrocks")
         .version("0.1")

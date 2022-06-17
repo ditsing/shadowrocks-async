@@ -28,8 +28,8 @@ ring-digest-in-hkdf = ["ring"]
 [dependencies]
 async-trait = "0.1"
 log = { version = "~0.4", features = ["max_level_debug", "release_max_level_warn"] }
-stderrlog = "~0.5"
 clap = "~2.33.0"
+env_logger = "0.9.0"
 ring = { version = "~0.16", optional = true }
 openssl = { version = "~0.10.35", features = ["vendored"] }
 rand = "0.7"

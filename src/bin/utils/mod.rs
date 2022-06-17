@@ -1,27 +1,8 @@
 /// A module that helps building a binary: commandline flags, log levels etc.
-extern crate stderrlog;
-
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::time::Duration;
 
 use shadowrocks::{GlobalConfig, ParsedFlags, ParsedServerUrl, Result};
-
-fn choose_log_level() -> log::LevelFilter {
-    if cfg!(debug_assertions) {
-        log::LevelFilter::Debug
-    } else {
-        log::LevelFilter::Info
-    }
-}
-
-pub fn log_init() {
-    stderrlog::new()
-        .module("shadowrocks")
-        .timestamp(stderrlog::Timestamp::Microsecond)
-        .verbosity(choose_log_level() as usize)
-        .init()
-        .unwrap();
-}
 
 #[allow(unused)]
 pub fn parse_commandline_args(

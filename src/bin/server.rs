@@ -8,7 +8,7 @@ pub mod utils;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
-    utils::log_init();
+    env_logger::init();
 
     let app = clap_app!(shadowrocks =>
         (version: "0.1")
