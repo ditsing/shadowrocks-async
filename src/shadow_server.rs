@@ -70,7 +70,7 @@ impl ShadowServer {
         info!("Connecting to target address ...");
         let target_stream = match &target_addr {
             Socks5Addr::Domain(domain_buf, port) => {
-                let domain_str_result = std::str::from_utf8(&domain_buf);
+                let domain_str_result = std::str::from_utf8(domain_buf);
                 let domain_str = match domain_str_result {
                     Ok(domain_str) => domain_str,
                     Err(e) => {

@@ -97,13 +97,13 @@ impl ParsedFlags {
         let server_addr = Self::parse_addr(
             config_file.server,
             config_file.server_port,
-            &"'server' and 'server_port'",
+            "'server' and 'server_port'",
         )?;
 
         let local_addr = Self::parse_addr(
             config_file.local_address,
             config_file.local_port,
-            &"'local_address' and 'local_port'",
+            "'local_address' and 'local_port'",
         )?;
 
         Ok(ParsedFlags {

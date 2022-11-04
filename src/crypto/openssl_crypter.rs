@@ -271,8 +271,6 @@ mod test {
     fn test_expected_ciphertext_size() {
         let mut data = Vec::with_capacity(256);
         let mut crypter = make_crypter(NonceType::Sequential);
-        // Clippy does not have this check on Rust stable (1.46.0).
-        #[allow(clippy::unknown_clippy_lints)]
         #[allow(clippy::same_item_push)]
         for _ in 0..256 {
             data.push(5u8);

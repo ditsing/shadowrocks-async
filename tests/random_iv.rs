@@ -16,7 +16,6 @@ fn run_random_iv_test(compatible_mode: bool) -> std::io::Result<()> {
     };
 
     let mut addrs = vec![];
-    #[allow(clippy::unknown_clippy_lints)]
     #[allow(clippy::same_item_push)]
     for _ in 0..SERVER_COUNT {
         let shadow_tcp_listener = create_any_tcp_listener()?;

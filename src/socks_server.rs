@@ -143,7 +143,7 @@ impl SocksServer {
         let mut methods = vec![0u8; nmethods];
         debug!("Expecting {} following bytes", nmethods);
         info!("Reading acceptable auth methods ...");
-        stream.read_exact(&mut methods.as_mut_slice()).await?;
+        stream.read_exact(methods.as_mut_slice()).await?;
 
         // Extract a list of all methods
         let mut ret = Vec::with_capacity(nmethods);
