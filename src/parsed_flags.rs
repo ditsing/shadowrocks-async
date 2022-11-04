@@ -138,6 +138,7 @@ mod tests {
             let file_name: String = rng
                 .sample_iter(rand::distributions::Alphanumeric)
                 .take(10)
+                .map(char::from)
                 .chain(".json".chars())
                 .collect();
 
